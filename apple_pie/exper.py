@@ -1,5 +1,7 @@
 import os
 
+from typing import *
+
 import xlsxwriter
 
 from .well import Well
@@ -7,7 +9,22 @@ from .condit import Condit
 from .ap_utils import *
 
 
+
+
+
 class Exper :
+
+    """
+        * self.path
+        * self.name
+        * self.pm_file_path
+        * self.csv_path
+        * self.condit_dist_path
+        * self.wells
+        * self.condits
+        * self.control
+    """
+
     PLATE_MAP_SUF = '_plate-map.csv'
     CSV_DIR = 'Csv'
     CSV_EXT = '.csv'
@@ -30,30 +47,33 @@ class Exper :
 
     NAME_DELIM = '_'
 
+    CONTROL_PAT = 'dmso'    ## all lowercase
 
 
 
 
-
-    def __init__(self, exper_path) :
-        """
-        """
+    def __init__(self, exper_path: Types.File) :
         all_t = ptic("all exper init")
 
         self.path = exper_path
 
         ### make it so this checks for / at end of path
         self.name = os.path.basename(self.path)
+        self.make_paths()
 
-        self.wells = {}
-        ## could make this more rigorous, check if filename fits a well format
         well_t = ptic('reading in wells')
-        for file_name in os.listdir(os.path.join(self.path,Exper.CSV_DIR)) :
-            if file_name.endswith('.csv') and len(file_name) == 7 :
-                well_name = file_name.split('.')[0]
-                self.wells[well_name] = Well(self,well_name,os.path.join(self.path,Exper.CSV_DIR,file_name))
+        self.make_wells()
         ptoc(well_t)
 
+        self.make_condits()
+
+        self.dists_to_xlsx2()
+
+        ptoc(all_t)
+
+
+
+    def make_paths(self) :
         self.pm_file_path = self.find_file_easy(Exper.PLATE_MAP_SUF)
         table_types, well_dicts, self.condit_dict = Exper.read_plate_map(self.pm_file_path)
 
@@ -65,22 +85,69 @@ class Exper :
         ensure_dir(self.condit_dist_path)
 
 
+    def make_wells(self) :
+        self.wells = {}
+
+        for file_name in os.listdir(os.path.join(self.path,Exper.CSV_DIR)) :
+            ## could make this more rigorous, check if filename fits a well format
+            if file_name.endswith('.csv') and len(file_name) == 7 :
+                well_name = file_name.split('.')[0]
+                self.wells[well_name] = Well(self,well_name,os.path.join(self.path, Exper.CSV_DIR, file_name))
 
 
 
-
-
+    def make_condits(self) :
         self.condits = {}
         for condit_name in self.condit_dict.keys() :
-            #print(condit_name)
             self.condits[condit_name] = Condit(self,condit_name,self.condit_dict[condit_name])
+        self.make_control()
+
+    def make_control(self) :
+        """
+        """
+        control_name = self.indentify_control()
+        self.control = self.condits[control_name]
+        del self.condits[control_name]
+
+    def identify_control(self) :
+        """
+        """
+        for condit_name in self.condits :
+            condit_name_str = tuple_to_str(condit_name)
+            temp = condit_name_str.lower()
+            if Exper.CONTROL_PAT in temp :
+                return condit_name
+        return None
 
 
+    def make_xlsx_formats(self, w_book) :
+        self.format_dicts = {}
+        format_yellow = w_book.add_format()
+        format_yellow.set_bg_color('#ffe98c')
 
-        self.dists_to_xlsx2()
+        self.format_dicts['yellow'] = {
+            'type':'cell',
+            'criteria':'>',
+            'value':50,
+            'format':format_yellow}
 
-        ptoc(all_t)
 
+        format_red = w_book.add_format()
+        format_red.set_bg_color('#f7b29b')
+
+        self.format_dicts['red'] = {
+            'type':'cell',
+            'criteria':'<',
+            'value':Condit.DEAD_CUTOFF,
+            'format':format_red}
+
+
+        format_white = w_book.add_format()
+        format_white.set_bg_color('#FFFFFF')
+
+        self.format_dicts['white'] = {
+            'type':'blanks',
+            'format':format_white}
 
 
     def dists_to_xlsx(self) :
@@ -88,23 +155,13 @@ class Exper :
             .. note:: assumes ``self.condits`` and ``self.condit_dist_path`` already exists
 
         """
-
-
         wb_time = ptic('whole xlsx workbook')
 
         out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF)
 
-
         with xlsxwriter.Workbook(out_file) as w_book :
 
-            self.format_yellow = w_book.add_format()
-            self.format_yellow.set_bg_color('#ffe98c')
 
-            self.format_red = w_book.add_format()
-            self.format_red.set_bg_color('#f7b29b')
-
-            self.format_white = w_book.add_format()
-            self.format_white.set_bg_color('#FFFFFF')
 
             for condit_name in self.condits :
                 self.condits[condit_name].dist_to_sheet(w_book)
@@ -116,12 +173,9 @@ class Exper :
             .. note:: assumes ``self.condits`` and ``self.condit_dist_path`` already exists
 
         """
-
-
         wb_time = ptic('whole xlsx workbook')
 
         out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF2)
-
 
         with xlsxwriter.Workbook(out_file) as w_book :
 
@@ -139,16 +193,16 @@ class Exper :
 
         ptoc(wb_time)
 
-    def find_file_easy(self,pattern,sub_dir='') :
+
+    def find_file_easy(self, pattern: str, sub_dir='') :
         """
         """
         temp_path = os.path.join(self.path,sub_dir)
         return Exper.find_file(temp_path,pattern)
 
 
-
     @staticmethod
-    def find_file(path,pattern) :
+    def find_file(path, pattern: str) :
         """
         """
         for file_name in os.listdir(path) :
@@ -161,9 +215,11 @@ class Exper :
 
 
     @staticmethod
-    def read_plate_map(pm_file_path) :
+    def read_plate_map(pm_file_path: Types.File) :
         """
             assumes rows go from B-P, and cols from 2-24
+
+            :param pm_file_path:
         """
         pm_rows = csv_to_rows(pm_file_path)
 
@@ -173,8 +229,6 @@ class Exper :
                 row_ranges.append([i])
             elif pm_rows[i][0] == 'P' :
                 row_ranges[-1].append(i)
-
-
 
         tables = []
 
@@ -190,10 +244,7 @@ class Exper :
             table_types.append(table_type)
 
 
-
         well_names = well_dicts[table_types[0]].keys()
-
-        #well_keys = set()
 
         condit_table_names = []
         for table_type in table_types :
@@ -223,7 +274,6 @@ class Exper :
                         #print("poop, issue in plate-map, table supposed to contain numbers\nbut well {0} can't be converted to a number, well {0} = {1}".format(well_name,name_part))
 
                 condit_name = condit_name + (name_part,)
-            # print(condit_name)
             if condit_name in condit_dict :
                 condit_dict[condit_name].append(well_name)
             else :
@@ -232,29 +282,25 @@ class Exper :
 
         return table_types, well_dicts, condit_dict
 
-        # for key in condit_dict.keys() :
-        #     print('{} : {}'.format(key,condit_dict[key]))
-
-
-
 
     @staticmethod
-    def process_table(table) :
+    def process_table(pm_table) -> [Types.SpecKey, Dict[str,str]] :
         """
+            | takes pm_table, a table from the plate-map file and
         """
-        if not len(table) == 16 :
+        if not len(pm_table) == 16 :
             ### fix this
             print('crap, this shouldnt happen')
-        elif not len(table[0]) == 24 :
+        elif not len(pm_table[0]) == 24 :
             ### fix this
             print('crap, this shouldnt happen')
 
-        table_type = table[0][0]
+        table_type = pm_table[0][0]
 
-        col_names = table[0][1:]
+        col_names = pm_table[0][1:]
 
-        table = table[1:]
-        table_as_cols = rotate(table)
+        pm_table = pm_table[1:]
+        table_as_cols = rotate(pm_table)
         row_names = table_as_cols[0]
 
         table_as_cols = table_as_cols[1:]

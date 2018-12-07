@@ -8,12 +8,10 @@ class Well :
         self.path = csv_path
 
         self.raw_data = lever_csv_to_dict(csv_path)
-        #len(self.raw_data.keys)
-        ## fix displacement columns
+
+        ## fix distance columns
 
         self.cell_count = len(self.raw_data.keys())/self.exper.COL_COUNT
-
-
 
 
     def __str__(self) :
