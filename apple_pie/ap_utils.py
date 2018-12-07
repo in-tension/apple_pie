@@ -17,7 +17,7 @@ def csv_to_rows(csv_path) :
 
 def is_rec(arrs) :
     """
-        | checks whether 2D list **arrs** is a rectangle -
+        | checks whether 2D list ``arrs`` is a rectangle -
         | checks that all inner arrays are the same length
         | returns a boolean
 
@@ -33,8 +33,8 @@ def make_rec(arrs, blank=None) :
         | takes a 2D list ``arrs`` and makes sure it's a rectangle -
         | makes sures all inner lists are the same length
 
-        | changes original **arrs**
-        | **blank** = value added to end of inner arrays if not long enough
+        | changes original ``arrs``
+        | ``blank`` = value added to end of inner arrays if not long enough
 
     """
     if not is_rec(arrs) :
@@ -49,10 +49,10 @@ def make_rec(arrs, blank=None) :
 
 def rotate(arrs,blank=None) :
     """
-        | takes a 2D list **arrs** and switches the inner and outer arrays
+        | takes a 2D list ``arrs`` and switches the inner and outer arrays
         | i.e. rows_to_cols or cols_to_rows
 
-        makes **arrs** a rectangle using make_rec - which changes oringinal **arrs**)
+        makes ``arrs`` a rectangle using make_rec - which changes oringinal ``arrs``)
 
         blank is used in make_rec
 
@@ -167,6 +167,56 @@ def lever_csv_to_dict(csv_path) :
     return col_dict
 
 
+
+def avg(arr) :
+    """
+        | returns the average of a given array
+        | skips None values
+    """
+    sum = 0.0
+    count = 0
+    # print('avg.arr = {}'.format(arr))
+    for element in arr :
+        # print(element)
+        if element != None :
+            sum += element
+            count += 1
+
+    # input()
+    if count == 0 :
+        return None
+    return sum/count
+
+
+def mov_avg(arr,above_below=5) :
+    """
+    """
+    new_arr = []
+
+    for i in range(len(arr)) :
+
+        below = i - above_below
+        if below < 0 : below = 0
+        above = i + above_below
+        if above >= len(arr) : above = len(arr) - 1
+
+        # print(below)
+        #
+        # print(above)
+
+        new_element = avg(arr[below:above])
+        new_arr.append(new_element)
+    return new_arr
+
+
+
+
+
+
+
+
+
+
 ## this can't be the right way to do this
 ## assumes list does not contain commas
 ## only finds first instance
@@ -190,6 +240,14 @@ def pattern_in_list(some_list, pattern) :
     else :
         return -1
 
+
+def tuple_to_str(tup,delim='_') :
+    """
+    """
+    temp = []
+    for term in tup :
+        temp.append(str(term))
+    return delim.join(temp)
 
 
 def tic() :
@@ -220,4 +278,4 @@ def ptoc(descrip_n_time) :
     """
     """
     elapsed_time = time.time() - descrip_n_time[1]
-    print('{} : {} seconds'.format(descrip_n_time[0], elapsed_time))
+    print('{} : {:.2f} seconds'.format(descrip_n_time[0], elapsed_time))

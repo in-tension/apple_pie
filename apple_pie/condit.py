@@ -23,9 +23,11 @@ class Condit :
             self.wells[well_name] = self.exper.wells[well_name]
 
         self.get_all_distances()
-        self.get_all_coords()
+        #self.get_all_coords()
 
-        self.dist_to_csv()
+        #self.dist_to_csv()
+
+
 
     def make_name_str(self) :
         """
@@ -40,12 +42,103 @@ class Condit :
 
 
     def dist_to_csv(self) :
+        """
+            assumes self.distances already exists
+        """
         out_file = os.path.join(self.exper.condit_dist_path, self.name_str + self.exper.CONDIT_DIST_SUF)
 
         col_dict_to_csv(self.distances,out_file)
 
 
-    
+    def dist_to_sheet(self, w_book) :
+        """
+        """
+        ws_time = ptic('whole worksheet')
+
+        w_sheet = w_book.add_worksheet(self.name_str)
+
+        col_num = 0
+        for cell_tup in self.distances :
+            cell_name = tuple_to_str(cell_tup)
+            w_sheet.write_string(0, col_num, cell_name)
+
+            w_sheet.write_column(1,col_num,self.distances[cell_tup])
+
+            col_num += 1
+
+        format_time = ptic('formatting worksheet')
+
+        w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
+            'type':'blanks',
+            'format':self.exper.format_white})
+
+        w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
+            'type':'cell',
+            'criteria':'>',
+            'value':50,
+            'format':self.exper.format_yellow})
+
+        w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
+            'type':'cell',
+            'criteria':'<',
+            'value':Condit.DEAD_CUTOFF,
+            'format':self.exper.format_red})
+
+
+
+        #ptoc(format_time)
+
+
+        #ptoc(ws_time)
+
+
+    def dist_to_sheet2(self, w_book) :
+        """
+        """
+        ws_time = ptic('whole worksheet')
+
+        w_sheet = w_book.add_worksheet(self.name_str)
+
+        col_num = 0
+        for cell_tup in self.distances :
+            cell_name = tuple_to_str(cell_tup)
+            w_sheet.write_string(0, col_num, cell_name)
+
+            ## in it's current form mov_avg would put a value in place of a None value if it was close enough to other data
+            ## however I don't think this matters because the idea would only be to use mov_avg to find which values to should be set to None
+            smooth_col = mov_avg(self.distances[cell_tup])
+
+            w_sheet.write_column(1,col_num,smooth_col)
+
+            col_num += 1
+
+        format_time = ptic('formatting worksheet')
+
+        w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
+            'type':'blanks',
+            'format':self.exper.format_white})
+
+        w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
+            'type':'cell',
+            'criteria':'>',
+            'value':50,
+            'format':self.exper.format_yellow})
+
+        w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
+            'type':'cell',
+            'criteria':'<',
+            'value':Condit.DEAD_CUTOFF,
+            'format':self.exper.format_red})
+
+
+
+        #ptoc(format_time)
+
+
+        #ptoc(ws_time)
+
+
+
 
     ## assumes self.distances already exists
     def _find_dead(self) :
@@ -187,6 +280,9 @@ class Condit :
         #print("trimming")
         self.trim_dist_ends()
         self.trim_dist_starts()
+        for cell_name in self.distances :
+            self.dist_len = len(self.distances[cell_name])
+            break
 
     def trim_dist_ends(self) :
         """

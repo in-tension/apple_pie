@@ -16,6 +16,9 @@ class Exper :
 
     CONDIT_DIST_SUF = '_cell-distances.csv'
 
+    EXPER_DIST_SUF = '_cell-distances_all-conditions.xlsx'
+    EXPER_DIST_SUF2 = '_cell-distances_all-conditions3.xlsx'
+
     COLS_5 = ['x(Pixel Position)', 'y(Pixel Position)',
         'Area(pixels.^2)','Covariance','Pixels/Frame']
         ## Pixels/Frame = displacement
@@ -39,6 +42,9 @@ class Exper :
 
         self.path = exper_path
 
+        ### make it so this checks for / at end of path
+        self.name = os.path.basename(self.path)
+
         self.wells = {}
         ## could make this more rigorous, check if filename fits a well format
         well_t = ptic('reading in wells')
@@ -60,12 +66,18 @@ class Exper :
 
 
 
+
+
+
+
         self.condits = {}
         for condit_name in self.condit_dict.keys() :
             #print(condit_name)
             self.condits[condit_name] = Condit(self,condit_name,self.condit_dict[condit_name])
 
-        self.dists_to_xlsx
+
+
+        self.dists_to_xlsx2()
 
         ptoc(all_t)
 
@@ -73,13 +85,59 @@ class Exper :
 
     def dists_to_xlsx(self) :
         """
-            ..warning: assumes condits already created
+            .. note:: assumes ``self.condits`` and ``self.condit_dist_path`` already exists
+
         """
 
-        with xlsx
-        for condit_name in self.condits :
-            self.condits[condit_name].dict_to_sheet
 
+        wb_time = ptic('whole xlsx workbook')
+
+        out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF)
+
+
+        with xlsxwriter.Workbook(out_file) as w_book :
+
+            self.format_yellow = w_book.add_format()
+            self.format_yellow.set_bg_color('#ffe98c')
+
+            self.format_red = w_book.add_format()
+            self.format_red.set_bg_color('#f7b29b')
+
+            self.format_white = w_book.add_format()
+            self.format_white.set_bg_color('#FFFFFF')
+
+            for condit_name in self.condits :
+                self.condits[condit_name].dist_to_sheet(w_book)
+
+        ptoc(wb_time)
+
+    def dists_to_xlsx2(self) :
+        """
+            .. note:: assumes ``self.condits`` and ``self.condit_dist_path`` already exists
+
+        """
+
+
+        wb_time = ptic('whole xlsx workbook')
+
+        out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF2)
+
+
+        with xlsxwriter.Workbook(out_file) as w_book :
+
+            self.format_yellow = w_book.add_format()
+            self.format_yellow.set_bg_color('#ffe98c')
+
+            self.format_red = w_book.add_format()
+            self.format_red.set_bg_color('#f7b29b')
+
+            self.format_white = w_book.add_format()
+            self.format_white.set_bg_color('#FFFFFF')
+
+            for condit_name in self.condits :
+                self.condits[condit_name].dist_to_sheet2(w_book)
+
+        ptoc(wb_time)
 
     def find_file_easy(self,pattern,sub_dir='') :
         """

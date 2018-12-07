@@ -8,26 +8,26 @@ import apple_pie as ap
 
 
 
-path = '/Volumes/baylieslab/Current Lab Members/Whitney/Rhabdomyosarcoma plate movies/Post-mycoplasma data (starting 9:18:18)/RH30/20181106/'
+path = '/Volumes/baylieslab/Current Lab Members/Whitney/Rhabdomyosarcoma plate movies/Post-mycoplasma data (starting 9:18:18)/RH30/20181106'
 
 
 my_exper = ap.Exper(path)
 
-condit_keys = sorted(list(my_exper.condits.keys()))
-condit = my_exper.condits[condit_keys[18]]
-print(condit.name)
-dists = condit.distances
-cks = sorted(list(dists.keys()))     ## ck = cell_keys
-coords = condit.coords_as_cols
-ccks = sorted(list(coords.keys()))     ## ck = coord_cell_keys
-
-
-t_int = [x/6 for x in range(1,97)]
-
-col1 = dists[cks[0]]
-
-# ap.col_dict_to_csv(condit.coords, 'testing.csv')
-ap.col_dict_to_csv(condit.distances, 'testing.csv')
+# condit_keys = sorted(list(my_exper.condits.keys()))
+# condit = my_exper.condits[condit_keys[18]]
+# print(condit.name)
+# dists = condit.distances
+# cks = sorted(list(dists.keys()))     ## ck = cell_keys
+# coords = condit.coords_as_cols
+# ccks = sorted(list(coords.keys()))     ## ck = coord_cell_keys
+#
+#
+# t_int = [x/6 for x in range(1,97)]
+#
+# col1 = dists[cks[0]]
+#
+# # ap.col_dict_to_csv(condit.coords, 'testing.csv')
+# ap.col_dict_to_csv(condit.distances, 'testing.csv')
 # #print(condit.coords)
 #
 # i = 0
