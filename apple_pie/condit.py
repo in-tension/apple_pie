@@ -1,5 +1,6 @@
 
 import xlsxwriter
+import matplotlib.pyplot as plt
 
 from .ap_utils import *
 
@@ -7,6 +8,7 @@ from .ap_utils import *
 class Condit :
     DEAD_CUTOFF = 3
     DEAD_FRAME_COUNT = 10
+    UPPER_CUTOFF = 50
 
     def __init__(self, exper, name: tuple, well_names) :
         """
@@ -20,13 +22,89 @@ class Condit :
             self.wells[well_name] = self.exper.wells[well_name]
 
         self.get_all_distances()
+        self.remove_dead()
+
+        col_dict_np_nan(self.distances)
+        col_dict_np_nan(self.cleaned_dists)
+
+        self.dist_med_col = col_dict_row_nanmed(self.distances)
+        self.cleaned_dist_med_col = col_dict_row_nanmed(self.cleaned_dists)
+
+        self.t_int = [x/6 for x in range(1,self.dist_len+1)]
+
+
         #self.get_all_coords()
 
         #self.dist_to_csv()
 
 
+    def plot_a_(self) :
+        ax = plt.gca()
 
-    def make_name_str(self) -> str:
+        ax.scatter(self.t_int,self.exper.control.dist_med_col,label='control orig median')
+        ax.scatter(self.t_int,self.exper.control.cleaned_dist_med_col,label='control removed dead median')
+        ax.scatter(self.t_int,self.dist_med_col,label=self.name_str+' orig median')
+        ax.scatter(self.t_int,self.cleaned_dist_med_col,label=self.name_str+' removed dead median')
+
+        # print(len(self.t_int))
+        # print(len(self.live_col))
+        # input()
+        ax.fill_between(self.t_int, self.live_col,label = 'live cells', alpha=.5, step='mid')
+        ax.fill_between(self.t_int, self.dead_col, y2=self.live_col, label = 'dead cells', alpha=.5, step='mid')
+        ax.fill_between(self.t_int, self.none_col, y2=self.dead_col, label='no data', alpha=.5, step='mid')
+
+        ax.legend()
+
+    def plot_a(self) :
+        #
+
+        plt.subplot(2,2,1)
+        ax = plt.gca()
+
+        ax.scatter(self.t_int,self.exper.control.dist_med_col,label='control orig median')
+        ax.scatter(self.t_int,self.exper.control.cleaned_dist_med_col,label='control removed dead median')
+        ax.set_ylim((0,20))
+
+        ax.legend()
+
+        plt.subplot(2,2,2)
+        ax = plt.gca()
+
+        ax.scatter(self.t_int,self.dist_med_col,label=self.name_str+' orig median')
+        ax.scatter(self.t_int,self.cleaned_dist_med_col,label=self.name_str+' removed dead median')
+
+        ax.set_ylim((0,20))
+
+        ax.legend()
+
+        # print(len(self.t_int))
+        # print(len(self.live_col))
+        # input()
+
+
+
+        plt.subplot(2,1,2)
+        ax = plt.gca()
+
+        temp_dead_col = [l+d for l,d in zip(self.live_col,self.dead_col)]
+        temp_none_col = [d+n for d,n in zip(temp_dead_col,self.none_col)]
+
+        ax.fill_between(self.t_int, self.live_col,label = 'live cells', step='mid', color='#846cfc')
+        #plt.pause(1)
+        ax.fill_between(self.t_int, temp_dead_col, y2=self.live_col, label = 'dead cells', step='mid', color='#87ffad')
+        #plt.pause(1)
+
+        ax.fill_between(self.t_int, temp_none_col, y2=temp_dead_col, label='no data', step='mid', color='#ffa0ce')
+
+        ax.set_ylim((0,60))
+        ax.legend()
+
+
+
+
+
+
+    def make_name_str(self) :
         """
             takes ``self.name``, a ``tuple`` and returns a ``str`` with each term joined by ``Exper.NAME_DELIM``
         """
@@ -34,7 +112,6 @@ class Condit :
         for term in self.name :
             temp.append(str(term))
         self.name_str = self.exper.NAME_DELIM.join(temp)
-
 
 
     def dist_to_csv(self) :
@@ -45,11 +122,9 @@ class Condit :
 
         col_dict_to_csv(self.distances,out_file)
 
-
     def dist_to_sheet(self, w_book: xlsxwriter.Workbook) :
         """
         """
-
         w_sheet = w_book.add_worksheet(self.name_str)
 
         col_dict_to_sheet(self.distances, w_sheet)
@@ -58,149 +133,23 @@ class Condit :
     def smooth_dist_to_sheet(self, w_book: xlsxwriter.Workbook) :
         """
         """
+        w_sheet = w_book.add_worksheet(self.name_str)
 
-                w_sheet = w_book.add_worksheet(self.name_str)
+        self.make_smooth_dists
+        # temp_col_dict = {}
+        # for cell_tup in self.distances :
+        #     temp_col_dict[cell_tup] = mov_avg(self.distances[cell_tup])
 
-
-        temp_col_dict = {}
-        for cell_tup in self.distances :
-            temp_col_dict[cell_tup] = mov_avg(self.distances[cell_tup])
-
-        col_dict_to_sheet(temp_col_dict, w_sheet)
+        col_dict_to_sheet(self.smooth_dists, w_sheet)
         self.set_xlsx_formats(w_sheet,1,0,self.dist_len,self.cell_count)
+
+
+
 
     def set_xlsx_formats(self,w_sheet,r1,c1,r2,c2) :
         w_sheet.conditional_format(r1,c1,r2,c2, self.exper.format_dicts['yellow'])
         w_sheet.conditional_format(r1,c1,r2,c2, self.exper.format_dicts['red'])
         w_sheet.conditional_format(r1,c1,r2,c2, self.exper.format_dicts['white'])
-
-    # def dist_to_sheet(self, w_book: xlsxwriter.Workbook) :
-    #     """
-    #     """
-    #
-    #     w_sheet = w_book.add_worksheet(self.name_str)
-    #
-    #     col_num = 0
-    #     for cell_tup in self.distances :
-    #         cell_name = tuple_to_str(cell_tup)
-    #
-    #         w_sheet.write_string(0, col_num, cell_name)
-    #
-    #         w_sheet.write_column(1,col_num,self.distances[cell_tup])
-    #
-    #         col_num += 1
-    #
-    #
-    #     w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, self.exper.format_dicts['yellow'])
-    #     w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, self.exper.format_dicts['red'])
-    #     w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, self.exper.format_dicts['white'])
-
-
-        # w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
-        #     'type':'blanks',
-        #     'format':self.exper.format_white})
-        #
-        # w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
-        #     'type':'cell',
-        #     'criteria':'>',
-        #     'value':50,
-        #     'format':self.exper.format_yellow})
-        #
-        # w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
-        #     'type':'cell',
-        #     'criteria':'<',
-        #     'value':Condit.DEAD_CUTOFF,
-        #     'format':self.exper.format_red})
-
-
-
-
-
-
-    def dist_to_sheet2(self, w_book) :
-        """
-        """
-
-        w_sheet = w_book.add_worksheet(self.name_str)
-
-        col_num = 0
-        for cell_tup in self.distances :
-            cell_name = tuple_to_str(cell_tup)
-            w_sheet.write_string(0, col_num, cell_name)
-
-            ## in it's current form mov_avg would put a value in place of a None value if it was close enough to other data
-            ## however I don't think this matters because the idea would only be to use mov_avg to find which values to should be set to None
-            smooth_col = mov_avg(self.distances[cell_tup])
-            ## if I could make this line such that the left side could be an argument, then
-
-
-            w_sheet.write_column(1,col_num,smooth_col)
-
-            col_num += 1
-
-
-        w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, self.exper.format_dicts['yellow'])
-        w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, self.exper.format_dicts['red'])
-        w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, self.exper.format_dicts['white'])
-
-        # w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
-        #     'type':'blanks',
-        #     'format':self.exper.format_white})
-        #
-        # w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
-        #     'type':'cell',
-        #     'criteria':'>',
-        #     'value':50,
-        #     'format':self.exper.format_yellow})
-        #
-        # w_sheet.conditional_format(1,0,self.dist_len,self.cell_count, {
-        #     'type':'cell',
-        #     'criteria':'<',
-        #     'value':Condit.DEAD_CUTOFF,
-        #     'format':self.exper.format_red})
-
-
-
-
-    ## assumes self.distances already exists
-    def _find_dead(self) :
-
-        logi_col = []
-        for cell_name in self.distances :
-            for dist in self.distances[cell_name] :
-                if dist == None :
-                    loci_col.append(None)
-                elif dist < Condit.DEAD_CUTOFF :
-                    logi_col.append(0)
-                else :
-                    loci_col.append(1)
-
-            ## can't be the most efficient way to do this
-            #pattern_in_list()
-
-
-    def find_dead(self) :
-        """
-        idk
-        """
-        for cell_name in self.distances :
-
-            logi_col = []
-            mbd = False ## mbd = might_be_dead
-            mbd_count
-
-            for dist in self.distances[cell_name] :
-
-                ## != None because I think error if you try None < 3
-                if dist != None and dist < 3 :
-                    pass
-
-                # if dist == None :
-                #     loci_col.append(None)
-                # elif dist < Condit.DEAD_CUTOFF :
-                #     logi_col.append(0)
-                # else :
-                #     loci_col.append(1)
 
 
     ## assumes every x has a y before the next x
@@ -235,27 +184,8 @@ class Condit :
 
             temp_cell_coords = []
             for x,y in zip(xs,ys) :
-                #print('x = {}, y = {}'.format(x,y))
-                # if x == '' :
-                #     x = None
-                # else :
-                #     try :
-                #         x = float(x)
-                #     except :
-                #         pass
-                #
-                #
-                # if y == '' :
-                #     y = None
-                # else :
-                #     try :
-                #         y = float(y)
-                #     except :
-                #         pass
-
                 temp_cell_coords.append([x,y])
             self.coords[cell_name] = temp_cell_coords
-
 
 
 
@@ -263,7 +193,6 @@ class Condit :
     def get_all_distances(self) :
         """
         """
-
         self.distances = {}
         for well in self.wells.values() :
             for key in well.raw_data.keys() :
@@ -290,7 +219,84 @@ class Condit :
 
         self.fix_distances_zeros()
         self.trim_distances()
+        self.remove_upper_outliers()
 
+
+    def remove_dead(self) :
+        self.make_smooth_dists()
+        self.cell_counts()
+
+        self.cleaned_dists = {}
+        # self.dead_col = []
+        # self.live_col = []
+        # self.none_col = []
+
+        for cell_name in self.smooth_dists :
+            temp_col = []
+            # dead = 0
+            # live = 0
+            # none = 0
+
+
+            for r in range(len(self.smooth_dists[cell_name])) :
+
+
+
+                if self.smooth_dists[cell_name][r] == None :
+                    temp_col.append(None)
+                    # none += 1
+
+                elif self.smooth_dists[cell_name][r] < Condit.DEAD_CUTOFF :
+                    temp_col.append(None)
+                    # dead += 1
+
+                else :
+                    temp_col.append(self.distances[cell_name][r])
+                    # live += 1
+
+
+            # self.dead_col.append(dead)
+            # self.live_col.append(live)
+            # self.none_col.append(none)
+
+            self.cleaned_dists[cell_name] = temp_col
+
+    def cell_counts(self) :
+        self.dead_col = []
+        self.live_col = []
+        self.none_col = []
+
+        for r in range(self.dist_len) :
+            dead = 0
+            live = 0
+            none = 0
+            for cell_name in self.smooth_dists :
+                if self.smooth_dists[cell_name][r] == None :
+                    none += 1
+
+                elif self.smooth_dists[cell_name][r] < Condit.DEAD_CUTOFF :
+                    dead += 1
+
+                else :
+                    live += 1
+            self.dead_col.append(dead)
+            self.live_col.append(live)
+            self.none_col.append(none)
+
+
+
+    def make_smooth_dists(self) :
+
+        self.smooth_dists = {}
+        for cell_name in self.distances :
+            self.smooth_dists[cell_name] = mov_avg(self.distances[cell_name])
+
+    def remove_upper_outliers(self) :
+        for cell_name in self.distances :
+            for i in range(len(self.distances[cell_name])) :
+                if not self.distances[cell_name][i] == None :
+                    if self.distances[cell_name][i] > Condit.UPPER_CUTOFF :
+                        self.distances[cell_name][i] = None
 
     def trim_distances(self) :
         """
@@ -323,8 +329,6 @@ class Condit :
             for col_key in self.distances :
                 self.distances[col_key] = self.distances[col_key][1:]
 
-
-
     def fix_distances_zeros(self) :
         """
         """
@@ -338,8 +342,6 @@ class Condit :
                     self.distances[col_key][0] = None
             else :
                 self.distances[col_key][index + 1] = None
-
-
 
 
     def __str__(self) :

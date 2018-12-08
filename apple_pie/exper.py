@@ -2,6 +2,7 @@ import os
 
 from typing import *
 
+import matplotlib.pyplot as plt
 import xlsxwriter
 
 from .well import Well
@@ -9,11 +10,7 @@ from .condit import Condit
 from .ap_utils import *
 
 
-
-
-
 class Exper :
-
     """
         * self.path
         * self.name
@@ -50,8 +47,6 @@ class Exper :
     CONTROL_PAT = 'dmso'    ## all lowercase
 
 
-
-
     def __init__(self, exper_path: Types.File) :
         all_t = ptic("all exper init")
 
@@ -67,9 +62,29 @@ class Exper :
 
         self.make_condits()
 
-        self.dists_to_xlsx2()
+        #self.dists_to_xlsx2()
 
         ptoc(all_t)
+
+        self.plot_a()
+
+
+    def plot_a(self) :
+        for condit_name in self.condits :
+            plt.close()
+            f = plt.figure(figsize=(8,8))
+
+            self.condits[condit_name].plot_a()
+            #plt.ylim(top=20)
+            #plt.ylim(0,20)
+            #plt.pause(2)
+            plt.waitforbuttonpress()
+            #print('poo')
+            #plt.clf()
+            #f.delaxes(plt.subplot(1,2,1))#.clear()
+            #plt.gca()
+            #f.delaxes(plt.subplot(1,2,2))#.clear()
+            #plt.gca()
 
 
 
@@ -95,7 +110,6 @@ class Exper :
                 self.wells[well_name] = Well(self,well_name,os.path.join(self.path, Exper.CSV_DIR, file_name))
 
 
-
     def make_condits(self) :
         self.condits = {}
         for condit_name in self.condit_dict.keys() :
@@ -105,7 +119,7 @@ class Exper :
     def make_control(self) :
         """
         """
-        control_name = self.indentify_control()
+        control_name = self.identify_control()
         self.control = self.condits[control_name]
         del self.condits[control_name]
 
@@ -122,29 +136,25 @@ class Exper :
 
     def make_xlsx_formats(self, w_book) :
         self.format_dicts = {}
+
         format_yellow = w_book.add_format()
         format_yellow.set_bg_color('#ffe98c')
-
         self.format_dicts['yellow'] = {
             'type':'cell',
             'criteria':'>',
             'value':50,
             'format':format_yellow}
 
-
         format_red = w_book.add_format()
         format_red.set_bg_color('#f7b29b')
-
         self.format_dicts['red'] = {
             'type':'cell',
             'criteria':'<',
             'value':Condit.DEAD_CUTOFF,
             'format':format_red}
 
-
         format_white = w_book.add_format()
         format_white.set_bg_color('#FFFFFF')
-
         self.format_dicts['white'] = {
             'type':'blanks',
             'format':format_white}
@@ -152,44 +162,33 @@ class Exper :
 
     def dists_to_xlsx(self) :
         """
-            .. note:: assumes ``self.condits`` and ``self.condit_dist_path`` already exists
-
+            .. note:: assumes ``self.condits`` and ``self.condit_dist_path`` already exist
         """
         wb_time = ptic('whole xlsx workbook')
 
         out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF)
 
         with xlsxwriter.Workbook(out_file) as w_book :
-
-
+            self.make_xlsx_formats(w_book)
 
             for condit_name in self.condits :
                 self.condits[condit_name].dist_to_sheet(w_book)
 
         ptoc(wb_time)
 
-    def dists_to_xlsx2(self) :
+    def smooth_dists_to_xlsx(self) :
         """
-            .. note:: assumes ``self.condits`` and ``self.condit_dist_path`` already exists
-
+            .. note:: assumes ``self.condits`` and ``self.condit_dist_path`` already exist
         """
         wb_time = ptic('whole xlsx workbook')
 
-        out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF2)
+        out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF)
 
         with xlsxwriter.Workbook(out_file) as w_book :
-
-            self.format_yellow = w_book.add_format()
-            self.format_yellow.set_bg_color('#ffe98c')
-
-            self.format_red = w_book.add_format()
-            self.format_red.set_bg_color('#f7b29b')
-
-            self.format_white = w_book.add_format()
-            self.format_white.set_bg_color('#FFFFFF')
+            self.make_xlsx_formats(w_book)
 
             for condit_name in self.condits :
-                self.condits[condit_name].dist_to_sheet2(w_book)
+                self.condits[condit_name].smooth_dist_to_sheet(w_book)
 
         ptoc(wb_time)
 
@@ -199,7 +198,6 @@ class Exper :
         """
         temp_path = os.path.join(self.path,sub_dir)
         return Exper.find_file(temp_path,pattern)
-
 
     @staticmethod
     def find_file(path, pattern: str) :
@@ -248,12 +246,9 @@ class Exper :
 
         condit_table_names = []
         for table_type in table_types :
-
-
             if well_dicts[table_type].keys() != well_names :
                 ### improve this
                 print("shit, some tables in plate-map have data in more wells than other tables\ncode assumes that this isn't the case and will likely cause issues if not\n\twill only look at wells that are in the very first table\n\twill crash if later table does not have a well in first table")
-
 
             ## could use startswith('condit') or split('_')[0] == 'condit'
             if table_type.startswith('condit') :
@@ -279,9 +274,7 @@ class Exper :
             else :
                 condit_dict[condit_name] = [well_name]
 
-
         return table_types, well_dicts, condit_dict
-
 
     @staticmethod
     def process_table(pm_table) -> [Types.SpecKey, Dict[str,str]] :

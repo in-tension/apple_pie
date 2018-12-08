@@ -1,10 +1,9 @@
-
 import os
 import csv
 import time
-
 import pathlib
 
+import numpy as np
 import xlsxwriter
 
 from typing import *
@@ -21,7 +20,6 @@ class Types :
     ColDict = Dict[Union[SpecKey], Arr]
 
 
-
 ## <arrs_to_spreadsheets>
 def csv_to_rows(csv_path: Types.File) :
     """
@@ -33,7 +31,6 @@ def csv_to_rows(csv_path: Types.File) :
             rows.append(row)
 
     return rows
-
 
 def csv_to_dict(csv_path: Types.File) :
     """
@@ -48,7 +45,6 @@ def csv_to_dict(csv_path: Types.File) :
         col_dict[col[0]] = col[1:]
 
     return col_dict
-
 
 def rows_to_csv(rows: Types.Arrs, csv_path: Types.File) :
     """
@@ -69,7 +65,6 @@ def col_dict_to_csv(col_dict, csv_path) :
         cols.append(temp_col)
     rows = rotate(cols)
     rows_to_csv(rows, csv_path)
-
 
 def col_dict_to_sheet(col_dict,w_sheet) :
     """
@@ -105,11 +100,9 @@ def lever_csv_to_dict(csv_path) :
             col_dict[col_tuple_key] = cols[ce+co][4:]
 
     return col_dict
-
 ## </arrs_to_spreadsheets>
 
 ## <arrs manip>
-
 def is_rec(arrs: Types.Arrs) :
     """
         | checks whether 2D list ``arrs`` is a rectangle -
@@ -150,15 +143,11 @@ def rotate(arrs: Types.Arrs, blank=None) :
         makes ``arrs`` a rectangle using make_rec - which changes oringinal ``arrs``)
 
         blank is used in make_rec
-
     """
-
     make_rec(arrs,blank=blank)
-
 
     rotated_arrs = [[arr[i] for arr in arrs] for i in range(len(arrs[0]))]
     return rotated_arrs
-
 ## </arrs_manip>
 
 
@@ -168,7 +157,6 @@ def ensure_dir(dir) :
     """
     if not os.path.exists(dir):
         os.makedirs(dir)
-
 
 def arr_cast(arr, cast_type) :
     """
@@ -183,7 +171,6 @@ def arr_cast(arr, cast_type) :
             new_arr.append(element)
     return new_arr
 
-
 ## arr_cast assumed from str
 ## where '' is set to None
 def arr_cast_spec(arr, cast_type) :
@@ -192,15 +179,12 @@ def arr_cast_spec(arr, cast_type) :
     """
     new_arr = []
     for element in arr :
-
-
         try :
             new_element = cast_type(element)
             new_arr.append(new_element)
         except :
             new_arr.append(None)
     return new_arr
-
 
 def avg(arr) :
     """
@@ -209,7 +193,6 @@ def avg(arr) :
     """
     sum = 0.0
     count = 0
-
     for element in arr :
         if element != None :
             sum += element
@@ -219,12 +202,10 @@ def avg(arr) :
         return None
     return sum/count
 
-
 def mov_avg(arr,above_below=5) :
     """
     """
     new_arr = []
-
     for i in range(len(arr)) :
 
         below = i - above_below
@@ -232,10 +213,39 @@ def mov_avg(arr,above_below=5) :
         above = i + above_below
         if above >= len(arr) : above = len(arr) - 1
 
-
         new_element = avg(arr[below:above])
         new_arr.append(new_element)
     return new_arr
+
+def arr_np_nan(arr) :
+    for i in range(len(arr)) :
+        if arr[i] == None :
+            arr[i] = np.nan
+
+
+def col_dict_np_nan(col_dict) :
+    for col_name in col_dict :
+        arr_np_nan(col_dict[col_name])
+
+def col_dict_row_nanmed(col_dict) :
+    """
+        .. note: asumes col_dict is rec
+    """
+    for col_name in col_dict :
+        h = len(col_dict[col_name])
+        break
+
+    med_col = []
+    for r in range(h) :
+        temp_row = []
+        for col_name in col_dict :
+            temp_row.append(col_dict[col_name][r])
+        med = np.nanmedian(temp_row)
+        med_col.append(med)
+
+
+
+    return med_col
 
 
 
@@ -262,7 +272,6 @@ def pattern_in_list(some_list, pattern) :
     else :
         return -1
 
-
 def tuple_to_str(tup,delim='_') :
     """
     """
@@ -271,9 +280,7 @@ def tuple_to_str(tup,delim='_') :
         temp.append(str(term))
     return delim.join(temp)
 
-
 ## <tic_toc>
-
 def tic() :
     """
     """
@@ -292,7 +299,6 @@ def toc2(start_time,descrip='') :
     elapsed_time = toc(start_time)
     print('{} : {} seconds'.format(descrip, elapsed_time))
 
-
 def ptic(descrip) :
     """
     """
@@ -303,5 +309,4 @@ def ptoc(descrip_n_time) :
     """
     elapsed_time = time.time() - descrip_n_time[1]
     print('{} : {:.2f} seconds'.format(descrip_n_time[0], elapsed_time))
-
 ## </tic_toc>
