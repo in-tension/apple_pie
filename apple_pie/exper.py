@@ -27,6 +27,8 @@ class Exper :
     CSV_EXT = '.csv'
 
     CONDIT_DIST_DIR = 'DistancesByCondition'
+    CONDIT_DIST_PLOT_DIR = 'Plots'
+
 
     CONDIT_DIST_SUF = '_cell-distances.csv'
 
@@ -78,13 +80,20 @@ class Exper :
             #plt.ylim(top=20)
             #plt.ylim(0,20)
             #plt.pause(2)
-            plt.waitforbuttonpress()
+
+
+            #plt.waitforbuttonpress()
+
+
+
+
             #print('poo')
             #plt.clf()
             #f.delaxes(plt.subplot(1,2,1))#.clear()
             #plt.gca()
             #f.delaxes(plt.subplot(1,2,2))#.clear()
             #plt.gca()
+            pass
 
 
 
@@ -98,6 +107,10 @@ class Exper :
         self.condit_dist_path = os.path.join(self.path, Exper.CONDIT_DIST_DIR)
 
         ensure_dir(self.condit_dist_path)
+
+        self.condit_dist_plot_path = os.path.join(self.condit_dist_path, Exper.CONDIT_DIST_PLOT_DIR)
+
+        ensure_dir(self.condit_dist_plot_path)
 
 
     def make_wells(self) :
@@ -132,6 +145,7 @@ class Exper :
             if Exper.CONTROL_PAT in temp :
                 return condit_name
         return None
+
 
 
     def make_xlsx_formats(self, w_book) :

@@ -12,6 +12,19 @@ class Condit :
 
     def __init__(self, exper, name: tuple, well_names) :
         """
+            self.exper
+            self.name
+            self.name_str
+            self.wells
+            self.distances
+            self.smooth_dists
+            self.cleaned_dists
+            self.dist_med_col
+            self.cleaned_dist_med_col
+            self.t_init
+            self.cell_count
+            self.dist_len
+
         """
         self.exper = exper
         self.name = name
@@ -36,9 +49,13 @@ class Condit :
         #self.get_all_coords()
 
         #self.dist_to_csv()
-
+        pass
 
     def plot_a_(self) :
+        """
+            old plot, pretty sure I can remove
+        """
+
         ax = plt.gca()
 
         ax.scatter(self.t_int,self.exper.control.dist_med_col,label='control orig median')
@@ -56,6 +73,10 @@ class Condit :
         ax.legend()
 
     def plot_a(self) :
+        """
+            plots control and condit dist_med and cleaned_dist_med
+            and a chart of live/dead/no data cells per time point
+        """
         #
 
         plt.subplot(2,2,1)
@@ -76,6 +97,11 @@ class Condit :
         ax.set_ylim((0,20))
 
         ax.legend()
+
+        plot_file = os.path.join(self.exper.condit_dist_plot_path, self.name_str + '_plot.png')
+
+        # f = plt.gcf()
+        # f.savefig(plot_file)
 
         # print(len(self.t_int))
         # print(len(self.live_col))
@@ -98,6 +124,9 @@ class Condit :
 
         ax.set_ylim((0,60))
         ax.legend()
+
+
+        plt.savefig(plot_file)
 
 
 
@@ -135,7 +164,9 @@ class Condit :
         """
         w_sheet = w_book.add_worksheet(self.name_str)
 
-        self.make_smooth_dists
+        # self.make_smooth_dists()
+
+
         # temp_col_dict = {}
         # for cell_tup in self.distances :
         #     temp_col_dict[cell_tup] = mov_avg(self.distances[cell_tup])
