@@ -51,26 +51,7 @@ class Condit :
         #self.dist_to_csv()
         pass
 
-    def plot_a_(self) :
-        """
-            old plot, pretty sure I can remove
-        """
 
-        ax = plt.gca()
-
-        ax.scatter(self.t_int,self.exper.control.dist_med_col,label='control orig median')
-        ax.scatter(self.t_int,self.exper.control.cleaned_dist_med_col,label='control removed dead median')
-        ax.scatter(self.t_int,self.dist_med_col,label=self.name_str+' orig median')
-        ax.scatter(self.t_int,self.cleaned_dist_med_col,label=self.name_str+' removed dead median')
-
-        # print(len(self.t_int))
-        # print(len(self.live_col))
-        # input()
-        ax.fill_between(self.t_int, self.live_col,label = 'live cells', alpha=.5, step='mid')
-        ax.fill_between(self.t_int, self.dead_col, y2=self.live_col, label = 'dead cells', alpha=.5, step='mid')
-        ax.fill_between(self.t_int, self.none_col, y2=self.dead_col, label='no data', alpha=.5, step='mid')
-
-        ax.legend()
 
     def plot_a(self) :
         """
@@ -88,6 +69,7 @@ class Condit :
 
         ax.legend()
 
+
         plt.subplot(2,2,2)
         ax = plt.gca()
 
@@ -100,14 +82,6 @@ class Condit :
 
         plot_file = os.path.join(self.exper.condit_dist_plot_path, self.name_str + '_plot.png')
 
-        # f = plt.gcf()
-        # f.savefig(plot_file)
-
-        # print(len(self.t_int))
-        # print(len(self.live_col))
-        # input()
-
-
 
         plt.subplot(2,1,2)
         ax = plt.gca()
@@ -116,10 +90,7 @@ class Condit :
         temp_none_col = [d+n for d,n in zip(temp_dead_col,self.none_col)]
 
         ax.fill_between(self.t_int, self.live_col,label = 'live cells', step='mid', color='#846cfc')
-        #plt.pause(1)
         ax.fill_between(self.t_int, temp_dead_col, y2=self.live_col, label = 'dead cells', step='mid', color='#87ffad')
-        #plt.pause(1)
-
         ax.fill_between(self.t_int, temp_none_col, y2=temp_dead_col, label='no data', step='mid', color='#ffa0ce')
 
         ax.set_ylim((0,60))
@@ -145,7 +116,8 @@ class Condit :
 
     def dist_to_csv(self) :
         """
-            assumes self.distances already exists
+            writes ``self.distances`` to a csv file
+            .. note: assumes ``self.distances`` already exists
         """
         out_file = os.path.join(self.exper.condit_dist_path, self.name_str + self.exper.CONDIT_DIST_SUF)
 
@@ -153,23 +125,21 @@ class Condit :
 
     def dist_to_sheet(self, w_book: xlsxwriter.Workbook) :
         """
+            writes ``self.distances`` to a excel add_worksheet
+            .. note: assumes ``self.distances`` already exists
         """
         w_sheet = w_book.add_worksheet(self.name_str)
 
         col_dict_to_sheet(self.distances, w_sheet)
         self.set_xlsx_formats(w_sheet,1,0,self.dist_len,self.cell_count)
 
+
     def smooth_dist_to_sheet(self, w_book: xlsxwriter.Workbook) :
         """
+            writes ``self.smooth_dists`` to a excel add_worksheet
+            .. note: assumes ``self.smooth_dists`` already exists
         """
         w_sheet = w_book.add_worksheet(self.name_str)
-
-        # self.make_smooth_dists()
-
-
-        # temp_col_dict = {}
-        # for cell_tup in self.distances :
-        #     temp_col_dict[cell_tup] = mov_avg(self.distances[cell_tup])
 
         col_dict_to_sheet(self.smooth_dists, w_sheet)
         self.set_xlsx_formats(w_sheet,1,0,self.dist_len,self.cell_count)
@@ -183,13 +153,13 @@ class Condit :
         w_sheet.conditional_format(r1,c1,r2,c2, self.exper.format_dicts['white'])
 
 
-    ## assumes every x has a y before the next x
     ## this function could probably be more efficient
     ## this function could probably more compact w/ less steps but I don't know if it would increase or decrease readability
     def get_all_coords(self) :
         """
             | goes through ``self.wells`` and creates ``self.coords``
             | a ``Types.ColDict`` of the coordinates of cells in condit
+            .. note: assumes every x has a y before the next x
         """
         self.coords_as_cols = {}
 
@@ -223,6 +193,8 @@ class Condit :
 
     def get_all_distances(self) :
         """
+            | gets distance columns from wells
+            | removes weird zeros and leading and trailing blank rows
         """
         self.distances = {}
         for well in self.wells.values() :
@@ -254,45 +226,33 @@ class Condit :
 
 
     def remove_dead(self) :
+        """
+            creates ``self.cleaned_dists`` with "dead" cells removed
+            .. note: assumes ``self.distances`` already exists
+        """
         self.make_smooth_dists()
         self.cell_counts()
 
         self.cleaned_dists = {}
-        # self.dead_col = []
-        # self.live_col = []
-        # self.none_col = []
 
         for cell_name in self.smooth_dists :
             temp_col = []
-            # dead = 0
-            # live = 0
-            # none = 0
-
 
             for r in range(len(self.smooth_dists[cell_name])) :
-
-
-
                 if self.smooth_dists[cell_name][r] == None :
                     temp_col.append(None)
-                    # none += 1
-
                 elif self.smooth_dists[cell_name][r] < Condit.DEAD_CUTOFF :
                     temp_col.append(None)
-                    # dead += 1
-
                 else :
                     temp_col.append(self.distances[cell_name][r])
-                    # live += 1
-
-
-            # self.dead_col.append(dead)
-            # self.live_col.append(live)
-            # self.none_col.append(none)
 
             self.cleaned_dists[cell_name] = temp_col
 
+
     def cell_counts(self) :
+        """
+            .. note: assumes ``self.smooth_dists`` already exists
+        """
         self.dead_col = []
         self.live_col = []
         self.none_col = []
