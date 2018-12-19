@@ -11,11 +11,22 @@ import apple_pie as ap
 
 
 
-path = '/Users/baylieslab/Documents/Amelia/ap/data/18-11-06'
+#path = '/Users/baylieslab/Documents/Amelia/ap/data/18-11-06'
+
+root_path = '/Volumes/baylieslab/Current Lab Members/Whitney/Rhabdomyosarcoma plate movies/Post-mycoplasma data (starting 9:18:18)'
+
+## /RH30/20181106'
+
+
+rh30_root_path = os.path.join(root_path + 'RH30')
+
+rh30_runs = os.listdir(rh30_root_path)
+
+print(rh30_runs)
 
 
 
-my_exper = ap.Exper(path)
+# my_exper = ap.Exper(path)
 
 # condit_keys = sorted(list(my_exper.condits.keys()))
 # condit = my_exper.condits[condit_keys[18]]

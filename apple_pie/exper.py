@@ -34,6 +34,7 @@ class Exper :
 
     EXPER_DIST_SUF = '_cell-distances_all-conditions.xlsx'
     EXPER_DIST_SUF2 = '_cell-distances_all-conditions3.xlsx'
+    EXPER_DIST_SUF_MEDS = '_medians-by-drugs.xlsx'
 
     COLS_5 = ['x(Pixel Position)', 'y(Pixel Position)',
         'Area(pixels.^2)','Covariance','Pixels/Frame']
@@ -68,7 +69,83 @@ class Exper :
 
         ptoc(all_t)
 
-        self.plot_a()
+        #self.plot_a()
+
+
+        self.group_condits()
+        self.meds_to_xlsx()
+
+        #print(self.groups)
+
+
+    def group_condits(self) :
+        self.groups = []
+
+        self.group_count = len(one_key(self.condits))
+
+        ## double check true for all conditions
+        self.frame_count = one_value(self.condits).dist_len
+
+
+        #for condit_name in self.condits :
+        #for i in range(len(one_value(self.condits))) :
+        for i in range(self.group_count) :
+            self.groups.append({})
+
+        for condit_name in self.condits :
+            for i in range(self.group_count) :
+
+                if condit_name[i] in self.groups[i] :
+                    self.groups[i][condit_name[i]].append(condit_name)
+                else :
+                    self.groups[i][condit_name[i]] = [condit_name]
+
+
+
+
+
+
+
+    def meds_to_xlsx(self) :
+        # pass
+
+        ## too specific / hard-coded
+        t_int = Exper.make_t_int(self.frame_count)
+
+        drug_groups = self.groups[0]
+
+        out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF_MEDS)
+
+        with xlsxwriter.Workbook(out_file, {'nan_inf_to_errors': True}) as w_book :
+
+
+            for drug in drug_groups :
+                # col_count = 0
+                w_sheet = w_book.add_worksheet(drug)
+                temp_col_dict = {"Time":t_int,"Control(dmso)":self.control.dist_meds}
+                for condit_name in drug_groups[drug] :
+                    temp_col_dict[condit_name] = self.condits[condit_name].dist_meds
+
+                col_num = col_dict_to_sheet(temp_col_dict, w_sheet)
+
+
+                # temp_col_dict[''] = ['','']
+                temp_col_dict = {"Time":t_int,"Control(dmso)_dead-removed":self.control.dist_meds}
+                for condit_name in drug_groups[drug] :
+                    temp_col_dict[condit_name + ('dead-removed',)] = self.condits[condit_name].cleaned_dist_meds
+
+                col_num = col_dict_to_sheet(temp_col_dict, w_sheet, col_num=col_num+1)
+
+
+
+
+
+
+
+        # for condit_name in self.condits :
+
+
+
 
 
     def plot_a(self) :
@@ -186,7 +263,7 @@ class Exper :
             self.make_xlsx_formats(w_book)
 
             for condit_name in self.condits :
-                self.condits[condit_name].dist_to_sheet(w_book)
+                self.condits[condit_name].dists_to_sheet(w_book)
 
         ptoc(wb_time)
 
@@ -202,7 +279,7 @@ class Exper :
             self.make_xlsx_formats(w_book)
 
             for condit_name in self.condits :
-                self.condits[condit_name].smooth_dist_to_sheet(w_book)
+                self.condits[condit_name].smooth_dists_to_sheet(w_book)
 
         ptoc(wb_time)
 
@@ -327,3 +404,8 @@ class Exper :
                     well_dict[well_name] = well_value
 
         return table_type, well_dict
+
+
+    @staticmethod
+    def make_t_int(count) :
+        return [x/6 for x in range(1,count+1)]

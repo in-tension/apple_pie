@@ -20,6 +20,17 @@ class Types :
     ColDict = Dict[Union[SpecKey], Arr]
 
 
+def one_key(some_dict) :
+    for key in some_dict :
+        return key
+
+def one_value(some_dict) :
+    for value in some_dict.values() :
+        return value
+
+
+
+
 ## <arrs_to_spreadsheets>
 def csv_to_rows(csv_path: Types.File) :
     """
@@ -66,10 +77,10 @@ def col_dict_to_csv(col_dict, csv_path) :
     rows = rotate(cols)
     rows_to_csv(rows, csv_path)
 
-def col_dict_to_sheet(col_dict,w_sheet) :
+def col_dict_to_sheet(col_dict,w_sheet,col_num=0) :
     """
     """
-    col_num = 0
+    # col_num = 0
     for key in col_dict :
         if(type(key) == tuple) :
             key_str = tuple_to_str(key)
@@ -84,6 +95,7 @@ def col_dict_to_sheet(col_dict,w_sheet) :
         w_sheet.write_column(1, col_num, col_dict[key])
 
         col_num += 1
+    return col_num
 
 def lever_csv_to_dict(csv_path) :
     """
