@@ -22,7 +22,6 @@ class ApGui :
 
         self.tree.heading("#0", text="", anchor='w')
 
-        self.tree.column("type", stretch=0, width=100)
 
 
         self.pop_root(path)
@@ -40,8 +39,20 @@ class ApGui :
         #     displaycolumns="size", yscrollcommand=lambda f, l: autoscroll(vsb, f, l),
         #     xscrollcommand=lambda f, l:autoscroll(hsb, f, l))
 
-        self.tree = ttk.Treeview(columns=("type"),yscrollcommand=lambda f, l: ApGui.autoscroll(self.vsb, f, l),
+        self.tree = ttk.Treeview(columns=("file_count","czi_count","csv_count"),displaycolumns=("file_count","czi_count"), yscrollcommand=lambda f, l: ApGui.autoscroll(self.vsb, f, l),
             xscrollcommand=lambda f, l:ApGui.autoscroll(self.hsb, f, l))
+
+        self.tree.column("czi_count", stretch=0, width=100)
+        self.tree.column("csv_count", stretch=0, width=100)
+        self.tree.column("file_count", stretch=0, width=100)
+
+
+        self.tree.heading("#0", text="Expers", anchor='w')
+        self.tree.heading("czi_count", text="czi_count", anchor='w')
+        self.tree.heading("csv_count", text="csv_count", anchor='w')
+        self.tree.heading("file_count", text="file_count", anchor='w')
+        # self.tree = ttk.Treeview(columns=("type"),yscrollcommand=lambda f, l: ApGui.autoscroll(self.vsb, f, l),
+        #     xscrollcommand=lambda f, l:ApGui.autoscroll(self.hsb, f, l))
 
         self.vsb['command'] = self.tree.yview
         self.hsb['command'] = self.tree.xview
@@ -57,7 +68,7 @@ class ApGui :
 
 
         node_name = os.path.basename(path)
-        self.root_node = self.tree.insert('', 'end', text=node_name, values=['d'],open=True)
+        self.root_node = self.tree.insert('', 'end', text=node_name, open=True)
 
 
         # rh30_runs = []
@@ -65,11 +76,15 @@ class ApGui :
             for entry in it :
                 if entry.is_dir() and entry.name.startswith('20') :
                     #rh30_runs.append(entry.name)
-                    temp = self.tree.insert(self.root_node,'end', text=entry.name, values=['d'],open=True)
+                    temp = self.tree.insert(self.root_node,'end', text=entry.name, open=True)
                     self.pop_with_contents(temp)
 
 
     def pop_with_contents(self, node) :
+        czi_count = 0
+        #has_csv_dir = False
+        csv_count = 0
+
         # print(self.tree.item(node, 'text'))
         node_path = os.path.join(self.root_path, self.tree.item(node, 'text'))
         with os.scandir(node_path) as it :
@@ -77,11 +92,23 @@ class ApGui :
                 # if entry.is_dir() :
                 #     self.tree.insert(node,'end',text=entry.name,values=['d'],open=True)
 
+                if entry.is_dir() :
+                    temp = self.tree.insert(node,0,text=entry.name+'/',open=True)
+                    if entry.name == 'Csv' :
+                        for f in os.listdir(os.path.join(node_path,entry.name)) :
+                            if f.endswith('.csv') :
+                                csv_count += 1
+                    self.tree.set(temp, 'file_count',len(os.listdir(os.path.join(node_path,entry.name))))
+                #elif 'plate-map' in entry.name :
+                if entry.name.endswith('_plate-map.csv') :
+                    self.tree.insert(node,'end',text=entry.name,open=True)
+                elif entry.name.endswith('.czi') :
+                    czi_count += 1
+                #self.tree.insert(node,'end',text=str(czi_count),open=True)
 
-                if entry.is_dir() : type = 'd'
-                else : type = 'f'
-                
-                self.tree.insert(node,'end',text=entry.name,values=[type],open=True)
+        self.tree.set(node,'czi_count',czi_count)
+        self.tree.set(node,'csv_count',csv_count)
+
 
 
     @staticmethod

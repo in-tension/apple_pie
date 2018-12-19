@@ -105,7 +105,6 @@ def autoscroll(sbar, first, last):
     sbar.set(first, last)
 
 
-def set_up_gui()
 
 
 def ap_gui(dir) :
