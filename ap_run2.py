@@ -1,3 +1,16 @@
+import os
+import time
+import tkinter
+from tkinter import ttk
+
+import matplotlib
+matplotlib.use("TkAgg")
+
+from matplotlib import pyplot as plt
+import matplotlib.colors
+
+import apple_pie as ap
+
 """A directory browser using Ttk Treeview.
 
 Based on the demo found in Tk 8.5 library/demos/browse
@@ -8,9 +21,15 @@ import tkinter
 from tkinter import ttk
 from hurry.filesize import size as fsize
 
+def butts() :
+    print("butts")
+    from matplotlib import pyplot as plt
+    import matplotlib.colors
+
+    import apple_pie as ap
+    print(dir())
+
 def populate_tree(tree, node):
-    print(type(node))
-    print(node)
     if tree.set(node, "type") != 'directory':
         return
 
@@ -44,8 +63,6 @@ def populate_roots(tree,dir):
     #dir_txt = dir.replace(' ','\s')
     node = tree.insert('', 'end', text=dir, values=[dir, "directory"])
     populate_tree(tree, node)
-    # tree.focus(node)
-    print(tree.item(node,open=True))
 
 def update_tree(event):
     tree = event.widget
@@ -70,7 +87,7 @@ def autoscroll(sbar, first, last):
         sbar.grid()
     sbar.set(first, last)
 
-def dir_gui(dir) :
+def run_gui(dir) :
     root = tkinter.Tk()
 
     vsb = ttk.Scrollbar(orient="vertical")
@@ -100,19 +117,18 @@ def dir_gui(dir) :
     root.grid_rowconfigure(0, weight=1)
     root.geometry('450x600')
     # print(type(root))
-    root.after(0, lambda : 1)
+    root.after(0,butts)
     root.mainloop()
     return root
-    # return root
 
 
 #
-# root_path = '/Volumes/baylieslab/Current Lab Members/Whitney/Rhabdomyosarcoma plate movies/Post-mycoplasma data (starting 9:18:18)'
-#
-# ## /RH30/20181106'
-#
-#
-# rh30_root_path = os.path.join(root_path, 'RH30')
-#
-#
-# root =  run_gui(root_path)
+root_path = '/Volumes/baylieslab/Current Lab Members/Whitney/Rhabdomyosarcoma plate movies/Post-mycoplasma data (starting 9:18:18)'
+
+## /RH30/20181106'
+
+
+rh30_root_path = os.path.join(root_path, 'RH30')
+
+
+root =  run_gui(root_path)

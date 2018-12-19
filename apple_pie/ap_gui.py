@@ -9,8 +9,6 @@ from tkinter import ttk
 from hurry.filesize import size as fsize
 
 def populate_tree(tree, node):
-    print(type(node))
-    print(node)
     if tree.set(node, "type") != 'directory':
         return
 
@@ -37,6 +35,42 @@ def populate_tree(tree, node):
         elif ptype == 'file':
             size_in_bytes = os.stat(p).st_size
             tree.set(id, "size", "{}B".format(fsize(size_in_bytes)))
+#
+# def populate_tree1(tree, node):
+#     if tree.set(node, "type") != 'directory':
+#         return
+#
+#     path = tree.set(node, "fullpath")
+#     tree.delete(*tree.get_children(node))
+#
+#     # parent = tree.parent(node)
+#     # special_dirs = [] if parent else glob.glob('.') + glob.glob('..')
+#
+#
+#     # rh30_runs = []
+#     with os.scandir(rh30_root_path) as scan :
+#         for entry in scan :
+#             if entry.is_dir() and entry.name.startswith('20') :
+#                 new_node = tree.insert(
+#                 # rh30_runs.append(entry.name)
+#
+#     for p in os.listdir(path):
+#     # for p in special_dirs + os.listdir(path):
+#         ptype = None
+#         p = os.path.join(path, p).replace('\\', '/')
+#         if os.path.isdir(p): ptype = "directory"
+#         elif os.path.isfile(p): ptype = "file"
+#
+#         fname = os.path.split(p)[1]
+#         id = tree.insert(node, "end", text=fname, values=[p, ptype])
+#
+#         if ptype == 'directory':
+#             if fname not in ('.', '..'):
+#                 tree.insert(id, 0, text="dummy")
+#                 tree.item(id, text=fname)
+#         elif ptype == 'file':
+#             size_in_bytes = os.stat(p).st_size
+#             tree.set(id, "size", "{}B".format(fsize(size_in_bytes)))
 
 
 def populate_roots(tree,dir):
@@ -70,7 +104,11 @@ def autoscroll(sbar, first, last):
         sbar.grid()
     sbar.set(first, last)
 
-def dir_gui(dir) :
+
+def set_up_gui()
+
+
+def ap_gui(dir) :
     root = tkinter.Tk()
 
     vsb = ttk.Scrollbar(orient="vertical")
@@ -100,9 +138,9 @@ def dir_gui(dir) :
     root.grid_rowconfigure(0, weight=1)
     root.geometry('450x600')
     # print(type(root))
-    root.after(0, lambda : 1)
+    # root.after(0, lambda : 1)
     root.mainloop()
-    return root
+    # return root
     # return root
 
 

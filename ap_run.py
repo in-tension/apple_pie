@@ -1,5 +1,12 @@
 import os
 import time
+import tkinter
+from tkinter import ttk
+
+
+import matplotlib
+matplotlib.use("TkAgg")
+
 
 from matplotlib import pyplot as plt
 import matplotlib.colors
@@ -7,7 +14,6 @@ import matplotlib.colors
 import apple_pie as ap
 
 # import .apple_pie.dir_gui
-
 
 
 #path = '/Users/baylieslab/Documents/Amelia/ap/data/18-11-06'
@@ -30,5 +36,6 @@ with os.scandir(rh30_root_path) as scan :
         if entry.is_dir() and entry.name.startswith('20') :
             rh30_runs.append(entry.name)
 
-# ap.dir_gui(rh30_root_path)
-ap.dir_gui('.')
+ap.dir_gui(rh30_root_path)
+# dir_gui(rh30_root_path)
+# ap.dir_gui('.')
