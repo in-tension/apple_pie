@@ -36,6 +36,17 @@ with os.scandir(rh30_root_path) as scan :
         if entry.is_dir() and entry.name.startswith('20') :
             rh30_runs.append(entry.name)
 
-ap.dir_gui(rh30_root_path)
+rh30_runs = sorted(rh30_runs)
+
+
+exper_path = os.path.join(rh30_root_path,rh30_runs[-1])
+
+e = ap.Exper(exper_path)
+# print(exper_path)
+#
+#
+# print(rh30_runs)
+
+# ap.dir_gui(rh30_root_path)
 # dir_gui(rh30_root_path)
 # ap.dir_gui('.')

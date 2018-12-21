@@ -8,6 +8,9 @@ import xlsxwriter
 
 from typing import *
 
+class RecordedIssue(Exception) :
+    pass
+
 class Types :
     """
     """
@@ -97,6 +100,12 @@ def col_dict_to_sheet(col_dict,w_sheet,col_num=0) :
         col_num += 1
     return col_num
 
+
+def col_dict_to_xlsx(out_file,col_dict,col_num=0) :
+    with xlsxwriter.Workbook(out_file, {'nan_inf_to_errors': True}) as w_book :
+        w_sheet = w_book.add_worksheet('')
+        col_dict_to_sheet(col_dict, w_sheet)
+
 def lever_csv_to_dict(csv_path) :
     """
         5 cols, not 4
@@ -125,6 +134,19 @@ def is_rec(arrs: Types.Arrs) :
     length = len(arrs[0])
     for arr in arrs :
         if len(arr) != length :
+            return False
+    return True
+
+def is_rec_col_dict(col_dict) :
+    """
+        | checks whether 2D list ``arrs`` is a rectangle -
+        | checks that all inner arrays are the same length
+        | returns a boolean
+
+    """
+    length = len(one_value(col_dict))
+    for col in col_dict.values() :
+        if len(col) != length :
             return False
     return True
 

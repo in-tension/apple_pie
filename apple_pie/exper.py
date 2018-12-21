@@ -1,5 +1,5 @@
 import os
-
+import json
 from typing import *
 
 import matplotlib.pyplot as plt
@@ -22,6 +22,7 @@ class Exper :
         * self.control
     """
 
+    LOG_FILE_SUF = '_log.json'
     PLATE_MAP_SUF = '_plate-map.csv'
     CSV_DIR = 'Csv'
     CSV_EXT = '.csv'
@@ -51,31 +52,36 @@ class Exper :
 
 
     def __init__(self, exper_path: Types.File) :
-        all_t = ptic("all exper init")
+        try :
+            self.issue_log = {}
 
-        self.path = exper_path
+            all_t = ptic("all exper init")
 
-        ### make it so this checks for / at end of path
-        self.name = os.path.basename(self.path)
-        self.make_paths()
+            self.path = exper_path
 
-        well_t = ptic('reading in wells')
-        self.make_wells()
-        ptoc(well_t)
+            ### make it so this checks for / at end of path
+            self.name = os.path.basename(self.path)
+            self.make_paths()
 
-        self.make_condits()
+            well_t = ptic('reading in wells')
+            self.make_wells()
+            ptoc(well_t)
 
-        #self.dists_to_xlsx2()
+            self.make_condits()
 
-        ptoc(all_t)
+            #self.dists_to_xlsx2()
 
-        #self.plot_a()
+            ptoc(all_t)
+
+            #self.plot_a()
 
 
-        self.group_condits()
-        self.meds_to_xlsx()
+            self.group_condits()
+            self.meds_to_xlsx()
 
-        #print(self.groups)
+            #print(self.groups)
+        finally :
+            self.issue_log_to_file()
 
 
     def group_condits(self) :
@@ -124,7 +130,10 @@ class Exper :
                 w_sheet = w_book.add_worksheet(drug)
                 temp_col_dict = {"Time":t_int,"Control(dmso)":self.control.dist_meds}
                 for condit_name in drug_groups[drug] :
-                    temp_col_dict[condit_name] = self.condits[condit_name].dist_meds
+                    try :
+                        temp_col_dict[condit_name] = self.condits[condit_name].dist_meds
+                    except :
+                        self.condits[condit_name].record_issue('exper.meds_to_xlsx',['condit.dist_meds is missing, could be caused by unmatching time points issue'])
 
                 col_num = col_dict_to_sheet(temp_col_dict, w_sheet)
 
@@ -132,7 +141,12 @@ class Exper :
                 # temp_col_dict[''] = ['','']
                 temp_col_dict = {"Time":t_int,"Control(dmso)_dead-removed":self.control.dist_meds}
                 for condit_name in drug_groups[drug] :
-                    temp_col_dict[condit_name + ('dead-removed',)] = self.condits[condit_name].cleaned_dist_meds
+
+
+                    try :
+                        temp_col_dict[condit_name + ('dead-removed',)] = self.condits[condit_name].cleaned_dist_meds
+                    except :
+                        self.condits[condit_name].record_issue('exper.meds_to_xlsx',['condit.cleaned_dist_meds is missing, could be caused by unmatching time points issue'])
 
                 col_num = col_dict_to_sheet(temp_col_dict, w_sheet, col_num=col_num+1)
 
@@ -283,6 +297,11 @@ class Exper :
 
         ptoc(wb_time)
 
+
+    def issue_log_to_file(self) :
+        log_file_path = os.path.join(self.path, self.name + Exper.LOG_FILE_SUF)
+        with open(log_file_path, 'a') as f :
+            json.dump(self.issue_log,f,indent=4)
 
     def find_file_easy(self, pattern: str, sub_dir='') :
         """

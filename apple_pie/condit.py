@@ -1,3 +1,5 @@
+import datetime
+
 
 import xlsxwriter
 import matplotlib.pyplot as plt
@@ -16,9 +18,7 @@ class Condit :
             self.name
             self.wells
 
-
             self.dists
-
             self.smooth_dists
             self.cleaned_dists
 
@@ -29,34 +29,39 @@ class Condit :
             self.cell_count
             self.dist_len
             self.name_str
-
-
         """
-        self.exper = exper
-        self.name = name
-        self.make_name_str()
+        try :
+            self.exper = exper
+            self.name = name
+            self.make_name_str()
 
-        self.wells = {}
-        for well_name in well_names :
-            self.wells[well_name] = self.exper.wells[well_name]
+            self.wells = {}
+            for well_name in well_names :
+                try :
+                    self.wells[well_name] = self.exper.wells[well_name]
+                except :
+                    self.record_issue('cell.__init__(...)',['missing well'],well=[well_name])
 
-        self.make_dists()
-        self.make_cleaned_dists()
+            self.make_dists()
+            self.make_cleaned_dists()
 
-        col_dict_np_nan(self.dists)
-        col_dict_np_nan(self.cleaned_dists)
+            col_dict_np_nan(self.dists)
+            col_dict_np_nan(self.cleaned_dists)
 
-        self.dist_meds = col_dict_row_nanmed(self.dists)
-        self.cleaned_dist_meds = col_dict_row_nanmed(self.cleaned_dists)
+            try :
+                self.dist_meds = col_dict_row_nanmed(self.dists)
+            except :
+                self.record_issue('cell.__init__ calling col_dict_row_nanmend(self.dists)',['this can be caused by some columns having more time points than other columns'])
+            self.cleaned_dist_meds = col_dict_row_nanmed(self.cleaned_dists)
 
-        self.t_int = [x/6 for x in range(1,self.dist_len+1)]
+            self.t_int = [x/6 for x in range(1,self.dist_len+1)]
 
 
-        #self.make_coords()
+            #self.make_coords()
 
-        #self.dists_to_csv()
-        pass
-
+            #self.dists_to_csv()
+        except RecordedIssue :
+            pass
 
 
     def plot_a(self) :
@@ -244,8 +249,19 @@ class Condit :
         if check_count != self.cell_count :
             print('fuck, condit cell_count wrong')
 
+
+
+        # col_dict_to_xlsx(self.name_str + '.xlsx', self.dists)
+
+
         self.fix_dists_zeros()
+
+        # print(self.name)
+        # print(is_rec_col_dict(self.dists))
         self.trim_dists()
+        # print(is_rec_col_dict(self.dists))
+
+
         self.remove_upper_outliers()
 
 
@@ -289,19 +305,33 @@ class Condit :
         self.live_col = []
         self.none_col = []
 
+        # temp = len(one_value(self.smooth_dists))
+        # if self.dist_len !=  temp :
+        #     print(self.dist_len)
+        #     print(temp)
+
         for r in range(self.dist_len) :
             dead = 0
             live = 0
             none = 0
             for cell_name in self.smooth_dists :
-                if self.smooth_dists[cell_name][r] == None :
-                    none += 1
+                # if len(self.smooth_dists[cell_name]) != self.dist_len :
+                # print(len(self.smooth_dists[cell_name]))
+                # print(len(self.dists[cell_name]))
+                # print(self.dist_len)
+                # print(self.name)
+                try :
+                    if self.smooth_dists[cell_name][r] == None :
+                        none += 1
 
-                elif self.smooth_dists[cell_name][r] < Condit.DEAD_CUTOFF :
-                    dead += 1
+                    elif self.smooth_dists[cell_name][r] < Condit.DEAD_CUTOFF :
+                        dead += 1
 
-                else :
-                    live += 1
+                    else :
+                        live += 1
+                except :
+                    self.record_issue('condit.make_cell_counts(self)', ['some distance columns have less time points than other columns'], well=cell_name)
+                    raise RecordedIssue
             self.dead_col.append(dead)
             self.live_col.append(live)
             self.none_col.append(none)
@@ -347,6 +377,16 @@ class Condit :
             for col_key in self.dists :
                 self.dists[col_key] = self.dists[col_key][:-1]
 
+
+    def _trim_dist_ends(self) :
+        """
+        """
+        remove_row = True
+        for col in self.dists.values() :
+            pass#if col :
+
+
+
     def trim_dist_starts(self) :
         """
         """
@@ -371,6 +411,51 @@ class Condit :
                     self.dists[col_key][0] = None
             else :
                 self.dists[col_key][index + 1] = None
+
+    def record_issue(self, method_name, msg, well=None, cell=None, assoc_files=None) :
+
+        info_list = [(datetime.datetime.today().strftime('%y-%m-%d %H:%M'))]
+        # info_list = [(datetime.datetime.today().isoformat())]
+
+        if well != None :
+            info_list.extend(well)
+
+            if cell != None :
+                info_list.append(': '.format(cell))
+
+        info_list.append(method_name)
+        info_list.extend(msg)
+        if assoc_files != None :
+            info_list.append('associated output files:{}'.format(assoc_files))
+
+        #self.exper.issue_log[self.name_str] = info_list
+        if self.name_str in self.exper.issue_log :
+            self.exper.issue_log[self.name_str].append(info_list)
+        else :
+            self.exper.issue_log[self.name_str] = [info_list]
+
+    def _record_issue(self, method_name, msg, well=None, cell=None, assoc_files=None) :
+
+        info_str = (datetime.datetime.today().isoformat())
+
+        if well != None :
+            info_str += '\n' + 'Well {}'.format(well)
+
+            if cell != None :
+                info_str += ':Cell {}'.format(cell)
+
+        info_str += '\n\n' + '{}:'.format(method_name)
+        info_str += '\n' + msg
+        if assoc_files != None :
+            info_str += '\nassociated output files:{}'.format(assoc_files)
+
+        if self.name_str in self.exper.isse_log :
+            self.exper.issue_log[self.name_str].append(info_str)
+        else :
+            self.exper.issue_log[self.name_str] = [info_str]
+
+
+
 
 
     def __str__(self) :
