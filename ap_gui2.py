@@ -64,6 +64,8 @@ class ApGui :
         self.root.grid_rowconfigure(0, weight=1)
         self.root.geometry(ApGui.INITIAL_SIZE)
 
+        ## self.tree.tag_configure('plate-map', background='DarkOliveGreen3')
+
     def pop_root(self, path) :
 
 
@@ -101,7 +103,7 @@ class ApGui :
                     self.tree.set(temp, 'file_count',len(os.listdir(os.path.join(node_path,entry.name))))
                 #elif 'plate-map' in entry.name :
                 if entry.name.endswith('_plate-map.csv') :
-                    self.tree.insert(node,'end',text=entry.name,open=True)
+                    self.tree.insert(node,'end',text=entry.name,open=True,tags=('plate-map',))
                 elif entry.name.endswith('.czi') :
                     czi_count += 1
                 #self.tree.insert(node,'end',text=str(czi_count),open=True)

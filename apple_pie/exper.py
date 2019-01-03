@@ -113,6 +113,50 @@ class Exper :
 
 
     def meds_to_xlsx(self) :
+        t_int = Exper.make_t_int(self.frame_count)
+
+        ## too specific / hard-coded
+        drug_groups = self.groups[0]
+
+        out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF_MEDS)
+
+        with xlsxwriter.Workbook(out_file, {'nan_inf_to_errors': True}) as w_book :
+
+            for drug in drug_groups :
+                # col_count = 0
+                w_sheet = w_book.add_worksheet(drug)
+                temp_col_dict = {"Time":t_int,"Control(dmso)":self.control.dist_meds}
+                for condit_name in drug_groups[drug] :
+                    try :
+                        temp_col_dict[condit_name] = self.condits[condit_name].dist_meds
+                    except :
+                        self.condits[condit_name].record_issue('exper.meds_to_xlsx',['condit.dist_meds is missing, could be caused by unmatching time points issue'])
+
+                col_num = col_dict_to_sheet(temp_col_dict, w_sheet)
+
+
+                # temp_col_dict[''] = ['','']
+                ## control.cleaned_dist_meds?? instead of dist_meds
+                temp_col_dict = {"Time":t_int,"Control(dmso)_dead-removed":self.control.dist_meds}
+                for condit_name in drug_groups[drug] :
+
+
+                    try :
+                        temp_col_dict[condit_name + ('dead-removed',)] = self.condits[condit_name].cleaned_dist_meds
+                    except :
+                        self.condits[condit_name].record_issue('exper.meds_to_xlsx',['condit.cleaned_dist_meds is missing, could be caused by unmatching time points issue'])
+
+                col_num = col_dict_to_sheet(temp_col_dict, w_sheet, col_num=col_num+1)
+
+
+
+
+
+
+
+        # for condit_name in self.condits :
+
+    def _meds_to_xlsx(self) :
         # pass
 
         ## too specific / hard-coded

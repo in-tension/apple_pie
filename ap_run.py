@@ -40,7 +40,7 @@ rh30_runs = sorted(rh30_runs)
 
 
 exper_path = os.path.join(rh30_root_path,rh30_runs[-1])
-
+# print(exper_path)
 e = ap.Exper(exper_path)
 # print(exper_path)
 #

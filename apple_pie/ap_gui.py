@@ -35,6 +35,10 @@ def populate_tree(tree, node):
         elif ptype == 'file':
             size_in_bytes = os.stat(p).st_size
             tree.set(id, "size", "{}B".format(fsize(size_in_bytes)))
+            print(fname)
+            if 'plate-map.csv' in fname :
+                print('yup')
+                tree.item(id,option="tags",('plate-map',))
 #
 # def populate_tree1(tree, node):
 #     if tree.set(node, "type") != 'directory':
@@ -119,6 +123,8 @@ def ap_gui(dir) :
 
     vsb['command'] = tree.yview
     hsb['command'] = tree.xview
+
+    tree.tag_configure('plate-map',background='green')
 
     tree.heading("#0", text="Directory Structure", anchor='w')
     tree.heading("size", text="File Size", anchor='w')
