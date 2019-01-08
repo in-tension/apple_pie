@@ -12,23 +12,34 @@ class Condit :
     DEAD_FRAME_COUNT = 10
     UPPER_CUTOFF = 50
 
+
     def __init__(self, exper, name: tuple, well_names) :
         """
-            self.exper
-            self.name
-            self.wells
+            always has:  self.
+                        
+            * exper
+            * name
+            * name_str
 
-            self.dists
-            self.smooth_dists
-            self.cleaned_dists
+            * wells
+            * dists
+            * cell_count
+            * time_point_count
+            * t_int
 
-            self.dist_meds
-            self.cleaned_dist_meds
+            can have: self.
 
-            self.t_init
-            self.cell_count
-            self.dist_len
-            self.name_str
+            * smooth_dists
+            * cleaned_dists
+
+            * dist_meds
+            * cleaned_dist_meds
+            * dist_means
+            * cleaned_dist_means
+
+            * coord_cols
+            * coords
+
         """
         try :
             self.exper = exper
@@ -42,32 +53,138 @@ class Condit :
                 except :
                     self.record_issue('cell.__init__(...)',['missing well'],well=[well_name])
 
-            self.make_dists()
-            self.make_cleaned_dists()
+            self.init_dists()
 
-            col_dict_np_nan(self.dists)
-            col_dict_np_nan(self.cleaned_dists)
+            # self.make_cleaned_dists()
+            #
+            # col_dict_np_nan(self.dists)
+            # col_dict_np_nan(self.cleaned_dists)
+            #
+            # try :
+            #     self.dist_meds = col_dict_row_nanmed(self.dists)
+            #     self.dist_means = col_dict_row_nanmean(self.dists)
+            #     self.cleaned_dist_meds = col_dict_row_nanmed(self.cleaned_dists)
+            #     self.cleaned_dist_means = col_dict_row_nanmean(self.cleaned_dists)
+            # except :
+            #     self.record_issue('cell.__init__ calling col_dict_row_nan<med>(self.<>dists)',['this can be caused by some columns having more time points than other columns'])
+            self.dists = {}
+            """ dists """
 
-            try :
-                self.dist_meds = col_dict_row_nanmed(self.dists)
-            except :
-                self.record_issue('cell.__init__ calling col_dict_row_nanmend(self.dists)',['this can be caused by some columns having more time points than other columns'])
-            self.cleaned_dist_meds = col_dict_row_nanmed(self.cleaned_dists)
 
-            self.t_int = [x/6 for x in range(1,self.dist_len+1)]
-
-
-            #self.make_coords()
-
-            #self.dists_to_csv()
         except RecordedIssue :
             pass
+
+    def init_dists(self) :
+        """
+            | gets distance columns from wells
+            | removes weird zeros and leading and trailing blank rows
+
+            creates
+
+            * dists
+            * cell_count
+            * time_point_count (init_trim_dists)
+            * t_int
+        """
+
+        self.dists = {}
+        """ dists """
+
+        for well in self.wells.values() :
+            for key in well.raw_data.keys() :
+                if key[1] == self.exper.COLS_5[4] :
+                    self.dists[(well.name,'cell {}'.format(key[0]))] = well.raw_data[key]
+
+        for col in self.dists.values() :
+            for i in range(len(col)) :
+                if col[i] == '' :
+                    col[i] = None
+                else :
+                    try :
+                        col[i] = float(col[i])
+                    except :
+                        print("oh no, well csv value not a number")
+
+        self.cell_count = len(self.dists.keys())
+
+        check_count = 0
+        for well in self.wells.values() :
+            check_count += well.cell_count
+        if check_count != self.cell_count :
+            print('fuck, condit cell_count wrong')
+
+        self.init_fix_dists_zeros()
+        self.init_trim_dists()
+        self.init_remove_upper_outliers()
+        #self.t_int = [x/6 for x in range(1,self.time_point_count+1)]
+        self.t_int = exper.make_t_int(time_point_count)
+
+
+    def init_fix_dists_zeros(self) :
+        """
+        """
+        pattern = [None, 0.0]
+        for col_key in self.dists:
+            index = pattern_in_list(self.dists[col_key], pattern)
+
+            if index == -1 :
+                if self.dists[col_key][0] == 0 :
+                    self.dists[col_key][0] = None
+            else :
+                self.dists[col_key][index + 1] = None
+
+    def init_trim_dists(self) :
+        """
+        """
+        self.init_trim_dist_ends()
+        self.init_trim_dist_starts()
+        for cell_name in self.dists :
+            self.time_point_count = len(self.dists[cell_name])
+            break
+
+    def init_trim_dist_ends(self) :
+        """
+        """
+        ## use break instead of return??
+        while(True) :
+            for col in self.dists.values() :
+                if col[-1] != None :
+                    return
+            for col_key in self.dists :
+                self.dists[col_key] = self.dists[col_key][:-1]
+
+    def init_trim_dist_starts(self) :
+        """
+        """
+        ## use break instead of return??
+        while(True) :
+            for col in self.dists.values() :
+                if col[0] != None :
+                    return
+            for col_key in self.dists :
+                self.dists[col_key] = self.dists[col_key][1:]
+
+    def init_remove_upper_outliers(self) :
+        for cell_name in self.dists :
+            for i in range(len(self.dists[cell_name])) :
+                if not self.dists[cell_name][i] == None :
+                    if self.dists[cell_name][i] > Condit.UPPER_CUTOFF :
+                        self.dists[cell_name][i] = None
+
 
 
     def plot_a(self) :
         """
             plots control and condit dist_med and cleaned_dist_med
             and a chart of live/dead/no data cells per time point
+
+            uses self.
+            * t_int
+            * (exper.control.dist_meds)
+            * (exper.conttrol.cleaned_dist_meds)
+            * dist_meds
+            * cleaned_dist_meds
+            * name_str
         """
 
 
@@ -111,13 +228,16 @@ class Condit :
         plt.savefig(plot_file)
 
 
-
-
+    def make_cen_tens(self) :
+        pass
 
 
     def make_name_str(self) :
         """
             takes ``self.name``, a ``tuple`` and returns a ``str`` with each term joined by ``Exper.NAME_DELIM``
+        """
+        """
+
         """
         temp = []
         for term in self.name :
@@ -132,7 +252,7 @@ class Condit :
         try :
             self.dists
         except AttributeError :
-            self.make_dists()
+            self.init_dists()
 
 
 
@@ -140,39 +260,47 @@ class Condit :
 
         col_dict_to_csv(self.dists,out_file)
 
-    def dists_to_sheet(self, w_book: xlsxwriter.Workbook) :
-        """
-            writes ``self.dists`` to a excel add_worksheet added to w_book
-        """
-        try :
-            self.dists
-        except AttributeError :
-            self.make_dists()
 
-
+    ## dists_to_sheets
+    ## self.to_sheet(w_book, self.dists)
+    def to_sheet(self, w_book: xlsxwriter.Workbook, col_dict) :
         w_sheet = w_book.add_worksheet(self.name_str)
-
-        col_dict_to_sheet(self.dists, w_sheet)
-        self.set_xlsx_formats(w_sheet,1,0,self.dist_len,self.cell_count)
-
-
-    def smooth_dists_to_sheet(self, w_book: xlsxwriter.Workbook) :
-        """
-            writes ``self.smooth_dists`` to a excel add_worksheet
-            .. note: assumes ``self.smooth_dists`` already exists
-        """
-        try :
-            self.smooth_dists
-        except AttributeError :
-            self.make_dists()
+        col_dict_to_sheet(col_dict, w_sheet)
+        self.set_xlsx_formats(w_sheet,1,0,self.time_point_count,self.cell_count)
 
 
-        w_sheet = w_book.add_worksheet(self.name_str)
 
-        col_dict_to_sheet(self.smooth_dists, w_sheet)
-        self.set_xlsx_formats(w_sheet,1,0,self.dist_len,self.cell_count)
+    # def dists_to_sheet(self, w_book: xlsxwriter.Workbook) :
+    #     """
+    #         writes ``self.dists`` to a worksheet added to w_book with add_worksheet
+    #     """
+    #     # try :
+    #     #     self.dists
+    #     # except AttributeError :
+    #     #     self.init_dists()
+    #
+    #
+    #     w_sheet = w_book.add_worksheet(self.name_str)
+    #
+    #     col_dict_to_sheet(self.dists, w_sheet)
+    #     self.set_xlsx_formats(w_sheet,1,0,self.time_point_count,self.cell_count)
 
 
+    # def smooth_dists_to_sheet(self, w_book: xlsxwriter.Workbook) :
+    #     """
+    #         writes ``self.smooth_dists`` to a excel add_worksheet
+    #         .. note: assumes ``self.smooth_dists`` already exists
+    #     """
+    #     try :
+    #         self.smooth_dists
+    #     except AttributeError :
+    #         self.init_dists()
+    #
+    #
+    #     w_sheet = w_book.add_worksheet(self.name_str)
+    #
+    #     col_dict_to_sheet(self.smooth_dists, w_sheet)
+    #     self.set_xlsx_formats(w_sheet,1,0,self.time_point_count,self.cell_count)
 
 
     def set_xlsx_formats(self,w_sheet,r1,c1,r2,c2) :
@@ -186,7 +314,7 @@ class Condit :
     def make_coords(self) :
         """
             | goes through ``self.wells`` and creates ``self.coords``
-            | a ``Types.ColDict`` of the coordinates of cells in condit
+            | a ``ColDict`` of the coordinates of cells in condit
 
             .. note: assumes every x has a y before the next x
         """
@@ -218,65 +346,20 @@ class Condit :
             self.coords[cell_name] = temp_cell_coords
 
 
-
-
-    def make_dists(self) :
-        """
-            | gets distance columns from wells
-            | removes weird zeros and leading and trailing blank rows
-        """
-        self.dists = {}
-        for well in self.wells.values() :
-            for key in well.raw_data.keys() :
-                if key[1] == self.exper.COLS_5[4] :
-                    self.dists[(well.name,'cell {}'.format(key[0]))] = well.raw_data[key]
-
-        for col in self.dists.values() :
-            for i in range(len(col)) :
-                if col[i] == '' :
-                    col[i] = None
-                else :
-                    try :
-                        col[i] = float(col[i])
-                    except :
-                        print("oh no, well csv value not a number")
-
-        self.cell_count = len(self.dists.keys())
-
-        check_count = 0
-        for well in self.wells.values() :
-            check_count += well.cell_count
-        if check_count != self.cell_count :
-            print('fuck, condit cell_count wrong')
-
-
-
-        # col_dict_to_xlsx(self.name_str + '.xlsx', self.dists)
-
-
-        self.fix_dists_zeros()
-
-        # print(self.name)
-        # print(is_rec_col_dict(self.dists))
-        self.trim_dists()
-        # print(is_rec_col_dict(self.dists))
-
-
-        self.remove_upper_outliers()
-
-
     def make_cleaned_dists(self) :
         """
             creates ``self.cleaned_dists`` with "dead" cells removed
-            .. note: assumes ``self.dists`` already exists
         """
-
-
-        self.make_smooth_dists()
-        self.make_cell_counts()
+        try :
+            self.smooth_dists
+        except :
+            self.make_smooth_dists()
+        try :
+            self.dead_col
+        except :
+            self.make_cell_counts()
 
         self.cleaned_dists = {}
-
 
         for cell_name in self.smooth_dists :
             temp_col = []
@@ -290,36 +373,32 @@ class Condit :
                     temp_col.append(self.dists[cell_name][r])
 
             self.cleaned_dists[cell_name] = temp_col
-            # print(cell_name)
-            # print(self.smooth_dists[cell_name])
-            # print(self.dists[cell_name])
-            # print(self.cleaned_dists[cell_name])
-            # input()
 
 
     def make_cell_counts(self) :
         """
-            .. note: assumes ``self.smooth_dists`` already exists
+            for each timepoint
+            makes self.
+            * dead_col
+            * live_col
+            * none_col
         """
+        try :
+            self.smooth_dists
+        except :
+            self.make_smooth_dists()
+
         self.dead_col = []
         self.live_col = []
         self.none_col = []
 
-        # temp = len(one_value(self.smooth_dists))
-        # if self.dist_len !=  temp :
-        #     print(self.dist_len)
-        #     print(temp)
 
-        for r in range(self.dist_len) :
+        for r in range(self.time_point_count) :
             dead = 0
             live = 0
             none = 0
             for cell_name in self.smooth_dists :
-                # if len(self.smooth_dists[cell_name]) != self.dist_len :
-                # print(len(self.smooth_dists[cell_name]))
-                # print(len(self.dists[cell_name]))
-                # print(self.dist_len)
-                # print(self.name)
+
                 try :
                     if self.smooth_dists[cell_name][r] == None :
                         none += 1
@@ -337,80 +416,18 @@ class Condit :
             self.none_col.append(none)
 
 
-
     def make_smooth_dists(self) :
         """
         """
-        try :
-            self.dists
-        except AttributeError :
-            self.make_dists()
+        # try :
+        #     self.dists
+        # except AttributeError :
+        #     self.init_dists()
 
         self.smooth_dists = {}
         for cell_name in self.dists :
             self.smooth_dists[cell_name] = mov_avg(self.dists[cell_name])
 
-    def remove_upper_outliers(self) :
-        for cell_name in self.dists :
-            for i in range(len(self.dists[cell_name])) :
-                if not self.dists[cell_name][i] == None :
-                    if self.dists[cell_name][i] > Condit.UPPER_CUTOFF :
-                        self.dists[cell_name][i] = None
-
-    def trim_dists(self) :
-        """
-        """
-        self.trim_dist_ends()
-        self.trim_dist_starts()
-        for cell_name in self.dists :
-            self.dist_len = len(self.dists[cell_name])
-            break
-
-    def trim_dist_ends(self) :
-        """
-        """
-        ## use break instead of return??
-        while(True) :
-            for col in self.dists.values() :
-                if col[-1] != None :
-                    return
-            for col_key in self.dists :
-                self.dists[col_key] = self.dists[col_key][:-1]
-
-
-    def _trim_dist_ends(self) :
-        """
-        """
-        remove_row = True
-        for col in self.dists.values() :
-            pass#if col :
-
-
-
-    def trim_dist_starts(self) :
-        """
-        """
-        ## use break instead of return??
-        while(True) :
-            for col in self.dists.values() :
-                if col[0] != None :
-                    return
-            for col_key in self.dists :
-                self.dists[col_key] = self.dists[col_key][1:]
-
-    def fix_dists_zeros(self) :
-        """
-        """
-
-        pattern = [None, 0.0]
-        for col_key in self.dists:
-            index = pattern_in_list(self.dists[col_key], pattern)
-
-            if index == -1 :
-                if self.dists[col_key][0] == 0 :
-                    self.dists[col_key][0] = None
-            else :
-                self.dists[col_key][index + 1] = None
 
     def record_issue(self, method_name, msg, well=None, cell=None, assoc_files=None) :
 
@@ -433,28 +450,6 @@ class Condit :
             self.exper.issue_log[self.name_str].append(info_list)
         else :
             self.exper.issue_log[self.name_str] = [info_list]
-
-    def _record_issue(self, method_name, msg, well=None, cell=None, assoc_files=None) :
-
-        info_str = (datetime.datetime.today().isoformat())
-
-        if well != None :
-            info_str += '\n' + 'Well {}'.format(well)
-
-            if cell != None :
-                info_str += ':Cell {}'.format(cell)
-
-        info_str += '\n\n' + '{}:'.format(method_name)
-        info_str += '\n' + msg
-        if assoc_files != None :
-            info_str += '\nassociated output files:{}'.format(assoc_files)
-
-        if self.name_str in self.exper.isse_log :
-            self.exper.issue_log[self.name_str].append(info_str)
-        else :
-            self.exper.issue_log[self.name_str] = [info_str]
-
-
 
 
 

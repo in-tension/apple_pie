@@ -251,15 +251,17 @@ def mov_avg(arr,above_below=5) :
         new_arr.append(new_element)
     return new_arr
 
-def arr_np_nan(arr) :
+def arr_np_nan(arr, blank=None) :
+    """ replaces blank values in arr with np.nan """
     for i in range(len(arr)) :
-        if arr[i] == None :
+        if arr[i] == blank :
             arr[i] = np.nan
 
 
-def col_dict_np_nan(col_dict) :
+def col_dict_np_nan(col_dict, blank=None) :
+    """ replaces blank values in cols of col_dict with np.nan """
     for col_name in col_dict :
-        arr_np_nan(col_dict[col_name])
+        arr_np_nan(col_dict[col_name],blank=blank)
 
 def col_dict_row_nanmed(col_dict) :
     """
@@ -275,6 +277,26 @@ def col_dict_row_nanmed(col_dict) :
         for col_name in col_dict :
             temp_row.append(col_dict[col_name][r])
         med = np.nanmedian(temp_row)
+        med_col.append(med)
+
+
+
+    return med_col
+
+def col_dict_row_nanmean(col_dict) :
+    """
+        .. note: asumes col_dict is rec
+    """
+    for col_name in col_dict :
+        h = len(col_dict[col_name])
+        break
+
+    med_col = []
+    for r in range(h) :
+        temp_row = []
+        for col_name in col_dict :
+            temp_row.append(col_dict[col_name][r])
+        med = np.nanmean(temp_row)
         med_col.append(med)
 
 

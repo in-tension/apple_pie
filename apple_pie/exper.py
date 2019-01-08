@@ -470,5 +470,6 @@ class Exper :
 
 
     @staticmethod
+    ## t_int -> time_intervals
     def make_t_int(count) :
         return [x/6 for x in range(1,count+1)]

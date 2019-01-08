@@ -38,7 +38,7 @@ def populate_tree(tree, node):
             print(fname)
             if 'plate-map.csv' in fname :
                 print('yup')
-                tree.item(id,option="tags",('plate-map',))
+                tree.item(id,"tags",('plate-map',))
 #
 # def populate_tree1(tree, node):
 #     if tree.set(node, "type") != 'directory':
