@@ -1,8 +1,9 @@
-import datetime
+from datetime import datetime
 
 
 import xlsxwriter
 import matplotlib.pyplot as plt
+import numpy as np
 
 from .ap_utils import *
 
@@ -13,38 +14,46 @@ class Condit :
     UPPER_CUTOFF = 50
 
 
-    def __init__(self, exper, name: tuple, well_names) :
+    def __init__(self, exper, name, well_names) :
         """
-            always has:  self.
-                        
-            * exper
-            * name
-            * name_str
 
-            * wells
-            * dists
-            * cell_count
-            * time_point_count
-            * t_int
+        Attributes
+        ----------
+        exper : Exper
+            parent
+        name : tuple
+            set of terms that identify this `Condit`
+        name_str : str
+            a string version of name
 
-            can have: self.
+        wells : `list`[ `Well` ]
+            a list of the Wells belonging to this `Condit`
+        dists : col_dict
+            asdfsdf
 
-            * smooth_dists
-            * cleaned_dists
+        * cell_count
+        * time_point_count
+        * t_int
 
-            * dist_meds
-            * cleaned_dist_meds
-            * dist_means
-            * cleaned_dist_means
+        can have: self.
 
-            * coord_cols
-            * coords
+        * smooth_dists
+        * cleaned_dists
+
+        * dist_meds
+        * cleaned_dist_meds
+        * dist_means
+        * cleaned_dist_means
+
+        * coord_cols
+        * coords
 
         """
         try :
+
             self.exper = exper
             self.name = name
-            self.make_name_str()
+            self.name_str = tuple_to_str(self.name)
 
             self.wells = {}
             for well_name in well_names :
@@ -67,8 +76,8 @@ class Condit :
             #     self.cleaned_dist_means = col_dict_row_nanmean(self.cleaned_dists)
             # except :
             #     self.record_issue('cell.__init__ calling col_dict_row_nan<med>(self.<>dists)',['this can be caused by some columns having more time points than other columns'])
-            self.dists = {}
-            """ dists """
+            #self.dists = {}
+            # """ dists """
 
 
         except RecordedIssue :
@@ -117,12 +126,9 @@ class Condit :
         self.init_trim_dists()
         self.init_remove_upper_outliers()
         #self.t_int = [x/6 for x in range(1,self.time_point_count+1)]
-        self.t_int = exper.make_t_int(time_point_count)
-
+        self.t_int = self.exper.make_t_int(self.time_point_count)
 
     def init_fix_dists_zeros(self) :
-        """
-        """
         pattern = [None, 0.0]
         for col_key in self.dists:
             index = pattern_in_list(self.dists[col_key], pattern)
@@ -134,8 +140,6 @@ class Condit :
                 self.dists[col_key][index + 1] = None
 
     def init_trim_dists(self) :
-        """
-        """
         self.init_trim_dist_ends()
         self.init_trim_dist_starts()
         for cell_name in self.dists :
@@ -143,8 +147,6 @@ class Condit :
             break
 
     def init_trim_dist_ends(self) :
-        """
-        """
         ## use break instead of return??
         while(True) :
             for col in self.dists.values() :
@@ -154,8 +156,6 @@ class Condit :
                 self.dists[col_key] = self.dists[col_key][:-1]
 
     def init_trim_dist_starts(self) :
-        """
-        """
         ## use break instead of return??
         while(True) :
             for col in self.dists.values() :
@@ -173,7 +173,36 @@ class Condit :
 
 
 
-    def plot_a(self) :
+    def i_hate_erything(self) :
+        pass
+
+    def means_of_means(self) :
+
+        try :
+            self.dist_means
+        except :
+            self.make_cen_tens()
+
+
+        # takes mean of each time point, and not of every cell velocity
+        # a cell velocity in a time point with less data
+        self.dist_mean_mean = np.nanmean(self.dist_means)
+
+
+
+    def make_cen_tens(self) :
+        self.dist_meds = col_dict_row_nanmed(self.dists)
+        self.dist_means = col_dict_row_nanmean(self.dists)
+
+        try :   # only make cen_tens if cleaned_dists already exists
+            self.cleaned_dists
+            self.cleaned_dist_meds = col_dict_row_nanmed(self.cleaned_dists)
+            self.cleaned_dist_means = col_dict_row_nanmean(self.cleaned_dists)
+        except :
+            pass
+
+
+    def out_plot_a(self) :
         """
             plots control and condit dist_med and cleaned_dist_med
             and a chart of live/dead/no data cells per time point
@@ -227,25 +256,7 @@ class Condit :
 
         plt.savefig(plot_file)
 
-
-    def make_cen_tens(self) :
-        pass
-
-
-    def make_name_str(self) :
-        """
-            takes ``self.name``, a ``tuple`` and returns a ``str`` with each term joined by ``Exper.NAME_DELIM``
-        """
-        """
-
-        """
-        temp = []
-        for term in self.name :
-            temp.append(str(term))
-        self.name_str = self.exper.NAME_DELIM.join(temp)
-
-
-    def dists_to_csv(self) :
+    def out_dists_to_csv(self) :
         """
             writes ``self.dists`` to a csv file
         """
@@ -261,49 +272,30 @@ class Condit :
         col_dict_to_csv(self.dists,out_file)
 
 
-    ## dists_to_sheets
-    ## self.to_sheet(w_book, self.dists)
-    def to_sheet(self, w_book: xlsxwriter.Workbook, col_dict) :
+    def out_to_sheet(self, w_book, col_dict) :
         w_sheet = w_book.add_worksheet(self.name_str)
         col_dict_to_sheet(col_dict, w_sheet)
-        self.set_xlsx_formats(w_sheet,1,0,self.time_point_count,self.cell_count)
+        self.helper_xlsx_formats(w_sheet,1,0,self.time_point_count,self.cell_count)
+
+    def out_dists_to_sheet(self, w_book) :
+        """
+            writes distances to an xlsx worksheet
+        """
+        self.out_to_sheet(w_book,self.dists)
+
+    def out_cleaned_dists_to_sheet(self, w_book) :
+        """
+            writes cleaned distances to an xlsx worksheet
+        """
+        try :
+            self.cleaned_dists
+        except :
+            self.make_cleaned_dists()
+        self.out_to_sheet(w_book,self.cleaned_dists)
 
 
 
-    # def dists_to_sheet(self, w_book: xlsxwriter.Workbook) :
-    #     """
-    #         writes ``self.dists`` to a worksheet added to w_book with add_worksheet
-    #     """
-    #     # try :
-    #     #     self.dists
-    #     # except AttributeError :
-    #     #     self.init_dists()
-    #
-    #
-    #     w_sheet = w_book.add_worksheet(self.name_str)
-    #
-    #     col_dict_to_sheet(self.dists, w_sheet)
-    #     self.set_xlsx_formats(w_sheet,1,0,self.time_point_count,self.cell_count)
-
-
-    # def smooth_dists_to_sheet(self, w_book: xlsxwriter.Workbook) :
-    #     """
-    #         writes ``self.smooth_dists`` to a excel add_worksheet
-    #         .. note: assumes ``self.smooth_dists`` already exists
-    #     """
-    #     try :
-    #         self.smooth_dists
-    #     except AttributeError :
-    #         self.init_dists()
-    #
-    #
-    #     w_sheet = w_book.add_worksheet(self.name_str)
-    #
-    #     col_dict_to_sheet(self.smooth_dists, w_sheet)
-    #     self.set_xlsx_formats(w_sheet,1,0,self.time_point_count,self.cell_count)
-
-
-    def set_xlsx_formats(self,w_sheet,r1,c1,r2,c2) :
+    def helper_xlsx_formats(self, w_sheet, r1, c1, r2, c2) :
         w_sheet.conditional_format(r1,c1,r2,c2, self.exper.format_dicts['yellow'])
         w_sheet.conditional_format(r1,c1,r2,c2, self.exper.format_dicts['red'])
         w_sheet.conditional_format(r1,c1,r2,c2, self.exper.format_dicts['white'])
@@ -357,7 +349,7 @@ class Condit :
         try :
             self.dead_col
         except :
-            self.make_cell_counts()
+            self.make_death_counts()
 
         self.cleaned_dists = {}
 
@@ -375,7 +367,7 @@ class Condit :
             self.cleaned_dists[cell_name] = temp_col
 
 
-    def make_cell_counts(self) :
+    def make_death_counts(self) :
         """
             for each timepoint
             makes self.
@@ -409,7 +401,7 @@ class Condit :
                     else :
                         live += 1
                 except :
-                    self.record_issue('condit.make_cell_counts(self)', ['some distance columns have less time points than other columns'], well=cell_name)
+                    self.record_issue('condit.make_death_counts(self)', ['some distance columns have less time points than other columns'], well=cell_name)
                     raise RecordedIssue
             self.dead_col.append(dead)
             self.live_col.append(live)
@@ -427,6 +419,7 @@ class Condit :
         self.smooth_dists = {}
         for cell_name in self.dists :
             self.smooth_dists[cell_name] = mov_avg(self.dists[cell_name])
+
 
 
     def record_issue(self, method_name, msg, well=None, cell=None, assoc_files=None) :

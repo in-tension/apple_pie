@@ -51,7 +51,7 @@ class Exper :
     CONTROL_PAT = 'dmso'    ## all lowercase
 
 
-    def __init__(self, exper_path: Types.File) :
+    def __init__(self, exper_path) :
         try :
             self.issue_log = {}
 
@@ -61,36 +61,38 @@ class Exper :
 
             ### make it so this checks for / at end of path
             self.name = os.path.basename(self.path)
-            self.make_paths()
+            self.init_paths_pm()
 
             well_t = ptic('reading in wells')
-            self.make_wells()
+            self.init_wells()
             ptoc(well_t)
 
-            self.make_condits()
+            self.init_condits()
 
             #self.dists_to_xlsx2()
 
             ptoc(all_t)
 
-            #self.plot_a()
+            #self.out_plot_a()
 
 
-            self.group_condits()
-            self.meds_to_xlsx()
+            self.init_groups()
+            #self.out_meds_to_xlsx()
 
             #print(self.groups)
         finally :
-            self.issue_log_to_file()
+            self.out_issue_log()
 
 
-    def group_condits(self) :
+    def init_groups(self) :
         self.groups = []
 
         self.group_count = len(one_key(self.condits))
 
         ## double check true for all conditions
-        self.frame_count = one_value(self.condits).dist_len
+        # self.frame_count = one_value(self.condits).time_point_count
+
+
 
 
         #for condit_name in self.condits :
@@ -108,11 +110,7 @@ class Exper :
 
 
 
-
-
-
-
-    def meds_to_xlsx(self) :
+    def out_meds_to_xlsx(self) :
         t_int = Exper.make_t_int(self.frame_count)
 
         ## too specific / hard-coded
@@ -130,7 +128,7 @@ class Exper :
                     try :
                         temp_col_dict[condit_name] = self.condits[condit_name].dist_meds
                     except :
-                        self.condits[condit_name].record_issue('exper.meds_to_xlsx',['condit.dist_meds is missing, could be caused by unmatching time points issue'])
+                        self.condits[condit_name].record_issue('exper.out_meds_to_xlsx',['condit.dist_meds is missing, could be caused by unmatching time points issue'])
 
                 col_num = col_dict_to_sheet(temp_col_dict, w_sheet)
 
@@ -144,16 +142,9 @@ class Exper :
                     try :
                         temp_col_dict[condit_name + ('dead-removed',)] = self.condits[condit_name].cleaned_dist_meds
                     except :
-                        self.condits[condit_name].record_issue('exper.meds_to_xlsx',['condit.cleaned_dist_meds is missing, could be caused by unmatching time points issue'])
+                        self.condits[condit_name].record_issue('exper.out_meds_to_xlsx',['condit.cleaned_dist_meds is missing, could be caused by unmatching time points issue'])
 
                 col_num = col_dict_to_sheet(temp_col_dict, w_sheet, col_num=col_num+1)
-
-
-
-
-
-
-
         # for condit_name in self.condits :
 
     def _meds_to_xlsx(self) :
@@ -177,7 +168,7 @@ class Exper :
                     try :
                         temp_col_dict[condit_name] = self.condits[condit_name].dist_meds
                     except :
-                        self.condits[condit_name].record_issue('exper.meds_to_xlsx',['condit.dist_meds is missing, could be caused by unmatching time points issue'])
+                        self.condits[condit_name].record_issue('exper.out_meds_to_xlsx',['condit.dist_meds is missing, could be caused by unmatching time points issue'])
 
                 col_num = col_dict_to_sheet(temp_col_dict, w_sheet)
 
@@ -190,28 +181,19 @@ class Exper :
                     try :
                         temp_col_dict[condit_name + ('dead-removed',)] = self.condits[condit_name].cleaned_dist_meds
                     except :
-                        self.condits[condit_name].record_issue('exper.meds_to_xlsx',['condit.cleaned_dist_meds is missing, could be caused by unmatching time points issue'])
+                        self.condits[condit_name].record_issue('exper.out_meds_to_xlsx',['condit.cleaned_dist_meds is missing, could be caused by unmatching time points issue'])
 
                 col_num = col_dict_to_sheet(temp_col_dict, w_sheet, col_num=col_num+1)
-
-
-
-
-
-
-
         # for condit_name in self.condits :
 
 
 
-
-
-    def plot_a(self) :
+    def out_plot_a(self) :
         for condit_name in self.condits :
             plt.close()
             f = plt.figure(figsize=(8,8))
 
-            self.condits[condit_name].plot_a()
+            self.condits[condit_name].out_plot_a()
             #plt.ylim(top=20)
             #plt.ylim(0,20)
             #plt.pause(2)
@@ -232,9 +214,9 @@ class Exper :
 
 
 
-    def make_paths(self) :
-        self.pm_file_path = self.find_file_easy(Exper.PLATE_MAP_SUF)
-        table_types, well_dicts, self.condit_dict = Exper.read_plate_map(self.pm_file_path)
+    def init_paths_pm(self) :
+        self.pm_file_path = self.helper_find_file_easy(Exper.PLATE_MAP_SUF)
+        table_types, well_dicts, self.condit_dict = Exper.in_plate_map(self.pm_file_path)
 
         self.csv_path = os.path.join(self.path,Exper.CSV_DIR)
 
@@ -248,7 +230,7 @@ class Exper :
         ensure_dir(self.condit_dist_plot_path)
 
 
-    def make_wells(self) :
+    def init_wells(self) :
         self.wells = {}
 
         for file_name in os.listdir(os.path.join(self.path,Exper.CSV_DIR)) :
@@ -258,20 +240,20 @@ class Exper :
                 self.wells[well_name] = Well(self,well_name,os.path.join(self.path, Exper.CSV_DIR, file_name))
 
 
-    def make_condits(self) :
+    def init_condits(self) :
         self.condits = {}
         for condit_name in self.condit_dict.keys() :
             self.condits[condit_name] = Condit(self,condit_name,self.condit_dict[condit_name])
-        self.make_control()
+        self.init_control()
 
-    def make_control(self) :
+    def init_control(self) :
         """
         """
-        control_name = self.identify_control()
+        control_name = self.helper_indentify_control()
         self.control = self.condits[control_name]
         del self.condits[control_name]
 
-    def identify_control(self) :
+    def helper_indentify_control(self) :
         """
         """
         for condit_name in self.condits :
@@ -283,7 +265,7 @@ class Exper :
 
 
 
-    def make_xlsx_formats(self, w_book) :
+    def helper_xlsx_formats(self, w_book) :
         self.format_dicts = {}
 
         format_yellow = w_book.add_format()
@@ -309,52 +291,54 @@ class Exper :
             'format':format_white}
 
 
-    def dists_to_xlsx(self) :
+    def out_dists_to_xlsx(self) :
         """
-            .. note:: assumes ``self.condits`` and ``self.condit_dist_path`` already exist
-        """
-        wb_time = ptic('whole xlsx workbook')
-
-        out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF)
-
-        with xlsxwriter.Workbook(out_file) as w_book :
-            self.make_xlsx_formats(w_book)
-
-            for condit_name in self.condits :
-                self.condits[condit_name].dists_to_sheet(w_book)
-
-        ptoc(wb_time)
-
-    def smooth_dists_to_xlsx(self) :
-        """
-            .. note:: assumes ``self.condits`` and ``self.condit_dist_path`` already exist
         """
         wb_time = ptic('whole xlsx workbook')
 
         out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF)
 
         with xlsxwriter.Workbook(out_file) as w_book :
-            self.make_xlsx_formats(w_book)
+            self.helper_xlsx_formats(w_book)
 
             for condit_name in self.condits :
-                self.condits[condit_name].smooth_dists_to_sheet(w_book)
+                self.condits[condit_name].out_dists_to_sheet(w_book)
 
         ptoc(wb_time)
 
 
-    def issue_log_to_file(self) :
+    def out_smooth_dists_to_xlsx(self) :
+        """
+        """
+        wb_time = ptic('whole xlsx workbook')
+
+        out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF)
+
+        with xlsxwriter.Workbook(out_file) as w_book :
+            self.helper_xlsx_formats(w_book)
+
+            for condit_name in self.condits :
+                pass
+                # condit will make smooth_dists in func if they don't already exist
+                self.condits[condit_name].out_smooth_dists_to_sheet(w_book)
+
+
+        ptoc(wb_time)
+
+
+    def out_issue_log(self) :
         log_file_path = os.path.join(self.path, self.name + Exper.LOG_FILE_SUF)
         with open(log_file_path, 'a') as f :
             json.dump(self.issue_log,f,indent=4)
 
-    def find_file_easy(self, pattern: str, sub_dir='') :
+    def helper_find_file_easy(self, pattern, sub_dir='') :
         """
         """
         temp_path = os.path.join(self.path,sub_dir)
-        return Exper.find_file(temp_path,pattern)
+        return Exper.helper_find_file(temp_path,pattern)
 
     @staticmethod
-    def find_file(path, pattern: str) :
+    def helper_find_file(path, pattern) :
         """
         """
         for file_name in os.listdir(path) :
@@ -367,7 +351,7 @@ class Exper :
 
 
     @staticmethod
-    def read_plate_map(pm_file_path: Types.File) :
+    def in_plate_map(pm_file_path) :
         """
             assumes rows go from B-P, and cols from 2-24
 
@@ -391,7 +375,7 @@ class Exper :
         well_dicts = {}
         table_types = []
         for table in tables :
-            table_type, well_dict = Exper.process_table(table)
+            table_type, well_dict = Exper.helper_process_table(table)
             well_dicts[table_type] = well_dict
             table_types.append(table_type)
 
@@ -431,7 +415,7 @@ class Exper :
         return table_types, well_dicts, condit_dict
 
     @staticmethod
-    def process_table(pm_table) -> [Types.SpecKey, Dict[str,str]] :
+    def helper_process_table(pm_table) :
         """
             | takes pm_table, a table from the plate-map file and
         """

@@ -11,17 +11,17 @@ from typing import *
 class RecordedIssue(Exception) :
     pass
 
-class Types :
-    """
-    """
-    Arr = List[Any]
-    Arrs = List[Arr]
-
-    File = os.PathLike
-
-    SpecKey = Union[str, tuple]
-    ColDict = Dict[Union[SpecKey], Arr]
-
+# class Types :
+#     """
+#     """
+#     Arr = List[Any]
+#     Arrs = List[Arr]
+#
+#     File = os.PathLike
+#
+#     SpecKey = Union[str, tuple]
+#     ColDict = Dict[Union[SpecKey], Arr]
+#
 
 def one_key(some_dict) :
     for key in some_dict :
@@ -35,7 +35,7 @@ def one_value(some_dict) :
 
 
 ## <arrs_to_spreadsheets>
-def csv_to_rows(csv_path: Types.File) :
+def csv_to_rows(csv_path) :
     """
     """
     rows = []
@@ -46,7 +46,7 @@ def csv_to_rows(csv_path: Types.File) :
 
     return rows
 
-def csv_to_dict(csv_path: Types.File) :
+def csv_to_dict(csv_path) :
     """
         reads a csv file and creates a dict of rows
         assumes first row is col names and that all are unique
@@ -60,7 +60,7 @@ def csv_to_dict(csv_path: Types.File) :
 
     return col_dict
 
-def rows_to_csv(rows: Types.Arrs, csv_path: Types.File) :
+def rows_to_csv(rows, csv_path) :
     """
         writes a 2D list of rows to a csv
     """
@@ -80,7 +80,7 @@ def col_dict_to_csv(col_dict, csv_path) :
     rows = rotate(cols)
     rows_to_csv(rows, csv_path)
 
-def col_dict_to_sheet(col_dict,w_sheet,col_num=0) :
+def col_dict_to_sheet(col_dict, w_sheet, col_num=0) :
     """
     """
     # col_num = 0
@@ -101,7 +101,7 @@ def col_dict_to_sheet(col_dict,w_sheet,col_num=0) :
     return col_num
 
 
-def col_dict_to_xlsx(out_file,col_dict,col_num=0) :
+def col_dict_to_xlsx(out_file, col_dict, col_num=0) :
     with xlsxwriter.Workbook(out_file, {'nan_inf_to_errors': True}) as w_book :
         w_sheet = w_book.add_worksheet('')
         col_dict_to_sheet(col_dict, w_sheet)
@@ -124,7 +124,7 @@ def lever_csv_to_dict(csv_path) :
 ## </arrs_to_spreadsheets>
 
 ## <arrs manip>
-def is_rec(arrs: Types.Arrs) :
+def is_rec(arrs) :
     """
         | checks whether 2D list ``arrs`` is a rectangle -
         | checks that all inner arrays are the same length
@@ -150,7 +150,7 @@ def is_rec_col_dict(col_dict) :
             return False
     return True
 
-def make_rec(arrs: Types.Arrs, blank=None) :
+def make_rec(arrs, blank=None) :
     """
         | takes a 2D list ``arrs`` and makes sure it's a rectangle -
         | makes sures all inner lists are the same length
@@ -169,7 +169,7 @@ def make_rec(arrs: Types.Arrs, blank=None) :
             while(len(arr) < longest) :
                 arr.append(blank)
 
-def rotate(arrs: Types.Arrs, blank=None) :
+def rotate(arrs, blank=None) :
     """
         | takes a 2D list ``arrs`` and switches the inner and outer arrays
         | i.e. rows_to_cols or cols_to_rows
@@ -236,7 +236,7 @@ def avg(arr) :
         return None
     return sum/count
 
-def mov_avg(arr,above_below=5) :
+def mov_avg(arr, above_below=5) :
     """
     """
     new_arr = []
@@ -267,6 +267,7 @@ def col_dict_row_nanmed(col_dict) :
     """
         .. note: asumes col_dict is rec
     """
+    col_dict_np_nan(col_dict)
     for col_name in col_dict :
         h = len(col_dict[col_name])
         break
@@ -287,6 +288,9 @@ def col_dict_row_nanmean(col_dict) :
     """
         .. note: asumes col_dict is rec
     """
+
+    col_dict_np_nan(col_dict)
+
     for col_name in col_dict :
         h = len(col_dict[col_name])
         break
@@ -328,7 +332,7 @@ def pattern_in_list(some_list, pattern) :
     else :
         return -1
 
-def tuple_to_str(tup,delim='_') :
+def tuple_to_str(tup, delim='_') :
     """
     """
     temp = []
@@ -349,7 +353,7 @@ def toc(start_time) :
     return (end_time-start_time)
 
 ## ptoc = print_toc
-def toc2(start_time,descrip='') :
+def toc2(start_time, descrip='') :
     """
     """
     elapsed_time = toc(start_time)
