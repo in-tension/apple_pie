@@ -424,7 +424,7 @@ class Condit :
 
     def record_issue(self, method_name, msg, well=None, cell=None, assoc_files=None) :
 
-        info_list = [(datetime.datetime.today().strftime('%y-%m-%d %H:%M'))]
+        info_list = [(datetime.today().strftime('%y-%m-%d %H:%M'))]
         # info_list = [(datetime.datetime.today().isoformat())]
 
         if well != None :
