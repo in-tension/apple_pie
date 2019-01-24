@@ -173,6 +173,32 @@ class Condit :
 
 
 
+
+    def make_normalized(self) :
+        try :
+            self.cleaned_dist_means
+        except :
+            self.make_cen_tens()
+
+
+
+        if self.time_point_count != self.exper.control.time_point_count :
+            print('issue in condit.normalized')
+            raise Exception
+
+        self.norm_dist_means = []
+        for t in range(self.time_point_count) :
+            self.norm_dists.append(self.cleaned_dist_means[t]/self.exper.control.cleaned_dist_means[t])
+
+        self.norm_mean_mean = np.nanmean(self.norm_dist_means)
+
+        print('i hate everything')
+
+
+
+
+
+
     def i_hate_erything(self) :
         pass
 
@@ -425,6 +451,7 @@ class Condit :
     def record_issue(self, method_name, msg, well=None, cell=None, assoc_files=None) :
 
         info_list = [(datetime.today().strftime('%y-%m-%d %H:%M'))]
+        #info_list = [(datetime.datetime.today().strftime('%y-%m-%d %H:%M'))]
         # info_list = [(datetime.datetime.today().isoformat())]
 
         if well != None :
