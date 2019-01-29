@@ -11,6 +11,21 @@ from typing import *
 class RecordedIssue(Exception) :
     pass
 
+
+
+def col_dict_to_cols(col_dict) :
+    cols = []
+    for key in col_dict.keys() :
+        cols.append(col_dict[key])
+    return cols
+
+def col_dict_to_rows(col_dict) :
+    cols = []
+    for key in col_dict.keys() :
+        cols.append(col_dict[key])
+    rows = ap.ap_utils.rotate(cols)
+    return rows
+
 # class Types :
 #     """
 #     """

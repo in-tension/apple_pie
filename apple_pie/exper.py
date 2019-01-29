@@ -7,6 +7,7 @@ import xlsxwriter
 
 from .well import Well
 from .condit import Condit
+from .group import Group
 from .ap_utils import *
 
 
@@ -84,8 +85,24 @@ class Exper :
             self.out_issue_log()
 
 
-    def init_groups(self) :
-        self.groups = []
+    def init_groups(self, tup_ind=0) :
+        ## tup_ind -> tuple_index :
+        ## make groups base on which element in condit.name tuple
+
+        self.groups = {}
+
+        for condit in self.condits.values() :
+            if condit.name[tup_ind] in self.groups :
+                self.groups[condit.name[tup_ind]].add_condit(condit)
+            else :
+                self.groups[condit.name[tup_ind]] = Group(self, condit.name[tup_ind], condits=[condit])
+
+
+
+    def _init_groups(self) :
+        ## will get rid of later
+        ## right now only leaving it because I need to refactor other func o remove it
+        self.group_names = []
 
         self.group_count = len(one_key(self.condits))
 
@@ -98,15 +115,23 @@ class Exper :
         #for condit_name in self.condits :
         #for i in range(len(one_value(self.condits))) :
         for i in range(self.group_count) :
-            self.groups.append({})
+            self.group_names.append({})
 
         for condit_name in self.condits :
             for i in range(self.group_count) :
 
-                if condit_name[i] in self.groups[i] :
-                    self.groups[i][condit_name[i]].append(condit_name)
+                if condit_name[i] in self.group_names[i] :
+                    self.group_names[i][condit_name[i]].append(condit_name)
                 else :
-                    self.groups[i][condit_name[i]] = [condit_name]
+                    self.group_names[i][condit_name[i]] = [condit_name]
+
+        self.drug_groups = {}
+
+        ## the 0 here probably shouldn't be hard coded
+        for drug_name in self.group_names[0] :
+            # self.drug_groups.append(Group(self, drug_name))
+            self.drug_groups[drug_name] = Group(self, drug_name)
+    # def make_no
 
 
 
@@ -114,7 +139,7 @@ class Exper :
         t_int = Exper.make_t_int(self.frame_count)
 
         ## too specific / hard-coded
-        drug_groups = self.groups[0]
+        drug_groups = self.group_names[0]
 
         out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF_MEDS)
 
@@ -153,7 +178,7 @@ class Exper :
         ## too specific / hard-coded
         t_int = Exper.make_t_int(self.frame_count)
 
-        drug_groups = self.groups[0]
+        drug_groups = self.group_names[0]
 
         out_file = os.path.join(self.condit_dist_path, self.name + Exper.EXPER_DIST_SUF_MEDS)
 
@@ -245,6 +270,16 @@ class Exper :
         for condit_name in self.condit_dict.keys() :
             self.condits[condit_name] = Condit(self,condit_name,self.condit_dict[condit_name])
         self.init_control()
+        self.init_cstr_tup_dict()
+
+    def init_cstr_tup_dict(self) :
+        self.cstr_tup_dict = {}
+        for condit in self.condits.values() :
+            #condit_str = str(condit_tup)
+            if condit.name_str in self.cstr_tup_dict :
+                print('we has issue in exper.init_cstr_tup_dict()')
+            else :
+                self.cstr_tup_dict[condit.name_str] = condit.name
 
     def init_control(self) :
         """
