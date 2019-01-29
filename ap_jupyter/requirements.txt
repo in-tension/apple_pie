@@ -1,5 +1,5 @@
-bqplot=0.11.5
-ipywidgets=7.4.2
-matplotlib=3.0.2
-numpy=1.15.4
-XlsxWriter=1.1.2
+bqplot==0.11.5
+ipywidgets==7.4.2
+matplotlib==3.0.2
+numpy==1.15.4
+XlsxWriter==1.1.2
