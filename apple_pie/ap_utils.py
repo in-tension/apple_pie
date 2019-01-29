@@ -310,17 +310,17 @@ def col_dict_row_nanmean(col_dict) :
         h = len(col_dict[col_name])
         break
 
-    med_col = []
+    mean_col = []
     for r in range(h) :
         temp_row = []
         for col_name in col_dict :
             temp_row.append(col_dict[col_name][r])
-        med = np.nanmean(temp_row)
-        med_col.append(med)
+        mean = np.nanmean(temp_row)
+        mean_col.append(mean)
 
 
 
-    return med_col
+    return mean_col
 
 
 

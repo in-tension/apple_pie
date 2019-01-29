@@ -100,10 +100,7 @@ class Condit :
 
 
     def make_normalized(self) :
-        try :
-            self.cleaned_dist_means
-        except :
-            self.make_cen_tens()
+
 
 
 
@@ -113,7 +110,7 @@ class Condit :
 
         self.norm_dist_means = []
         for t in range(self.time_point_count) :
-            self.norm_dists.append(self.cleaned_dist_means[t]/self.exper.control.cleaned_dist_means[t])
+            self.norm_dist_means.append(self.cleaned_dist_means[t]/self.exper.control.cleaned_dist_means[t])
 
         self.norm_mean_mean = np.nanmean(self.norm_dist_means)
 
@@ -124,8 +121,6 @@ class Condit :
 
 
 
-    def i_hate_erything(self) :
-        pass
 
     def means_of_means(self) :
 
@@ -136,13 +131,13 @@ class Condit :
 
 
 
-    def make_cen_tens(self) :
-        self.dist_meds = col_dict_row_nanmed(self.dists)
-        self.dist_means = col_dict_row_nanmean(self.dists)
-
-
-        self.cleaned_dist_meds = col_dict_row_nanmed(self.cleaned_dists)
-        self.cleaned_dist_means = col_dict_row_nanmean(self.cleaned_dists)
+    # def make_cen_tens(self) :
+    #     self._dist_meds = col_dict_row_nanmed(self.dists)
+    #     self._dist_means = col_dict_row_nanmean(self.dists)
+    #
+    #
+    #     self._cleaned_dist_meds = col_dict_row_nanmed(self.cleaned_dists)
+    #     self._cleaned_dist_means = col_dict_row_nanmean(self.cleaned_dists)
 
 
 
@@ -242,12 +237,12 @@ class Condit :
     ## this function could probably more compact w/ less steps but I don't know if it would increase or decrease readability
     def make_coords(self) :
         """
-            | goes through ``self.wells`` and creates ``self.coords``
+            | goes through ``self.wells`` and creates ``self._coords``
             | a ``ColDict`` of the coordinates of cells in condit
 
             .. note: assumes every x has a y before the next x
         """
-        self.coord_cols = {}
+        self._coord_cols = {}
 
         ## change this to for well_name in self.wells
         ## so as consistent through out
@@ -255,65 +250,65 @@ class Condit :
             for key in well.raw_data.keys() :
                 if key[1] == self.exper.COLS_5[0] :    ## COLS_5[0] -> x
                     col = arr_cast_spec(well.raw_data[key],float)
-                    self.coord_cols[(well.name, 'cell {}'.format(key[0]))] = [col]
+                    self._coord_cols[(well.name, 'cell {}'.format(key[0]))] = [col]
                 if key[1] == self.exper.COLS_5[1] :    ## COLS_5[1] -> y
                     col = arr_cast_spec(well.raw_data[key],float)
 
-                    self.coord_cols[(well.name, 'cell {}'.format(key[0]))].append(col)
+                    self._coord_cols[(well.name, 'cell {}'.format(key[0]))].append(col)
 
-        self.coords = {}
+        self._coords = {}
 
-        for cell_name in self.coord_cols :
+        for cell_name in self._coord_cols :
 
-            xs = self.coord_cols[cell_name][0]
-            ys = self.coord_cols[cell_name][1]
+            xs = self._coord_cols[cell_name][0]
+            ys = self._coord_cols[cell_name][1]
 
 
             temp_cell_coords = []
             for x,y in zip(xs,ys) :
                 temp_cell_coords.append([x,y])
-            self.coords[cell_name] = temp_cell_coords
+            self._coords[cell_name] = temp_cell_coords
 
 
-    def make_cleaned_dists(self) :
-        """
-            creates ``self.cleaned_dists`` with "dead" cells removed
-        """
-
-        try :
-            self.dead_col
-        except :
-            self.make_death_counts()
-
-        self.cleaned_dists = {}
-
-        for cell_name in self.smooth_dists :
-            temp_col = []
-
-            for r in range(len(self.smooth_dists[cell_name])) :
-                if self.smooth_dists[cell_name][r] == None :
-                    temp_col.append(None)
-                elif self.smooth_dists[cell_name][r] < Condit.DEAD_CUTOFF :
-                    temp_col.append(None)
-                else :
-                    temp_col.append(self.dists[cell_name][r])
-
-            self.cleaned_dists[cell_name] = temp_col
+    # def make_cleaned_dists(self) :
+    #     """
+    #         creates ``self.cleaned_dists`` with "dead" cells removed
+    #     """
+    #
+    #     # try :
+    #     #     self.dead_col
+    #     # except :
+    #     #     self.make_death_counts()
+    #
+    #     self._cleaned_dists = {}
+    #
+    #     for cell_name in self.smooth_dists :
+    #         temp_col = []
+    #
+    #         for r in range(len(self.smooth_dists[cell_name])) :
+    #             if self.smooth_dists[cell_name][r] == None :
+    #                 temp_col.append(None)
+    #             elif self.smooth_dists[cell_name][r] < Condit.DEAD_CUTOFF :
+    #                 temp_col.append(None)
+    #             else :
+    #                 temp_col.append(self.dists[cell_name][r])
+    #
+    #         self._cleaned_dists[cell_name] = temp_col
 
 
     def make_death_counts(self) :
         """
             for each timepoint
             makes self.
-            * dead_col
-            * live_col
-            * none_col
+            * _dead_col
+            * _live_col
+            * _none_col
         """
 
 
-        self.dead_col = []
-        self.live_col = []
-        self.none_col = []
+        self._dead_col = []
+        self._live_col = []
+        self._none_col = []
 
 
         for r in range(self.time_point_count) :
@@ -334,22 +329,22 @@ class Condit :
                 except :
                     self.record_issue('condit.make_death_counts(self)', ['some distance columns have less time points than other columns'], well=cell_name)
                     raise RecordedIssue
-            self.dead_col.append(dead)
-            self.live_col.append(live)
-            self.none_col.append(none)
+            self._dead_col.append(dead)
+            self._live_col.append(live)
+            self._none_col.append(none)
 
 
-    def make_smooth_dists(self) :
-        """
-        """
-        # try :
-        #     self.dists
-        # except AttributeError :
-        #     self.init_dists()
-
-        self.smooth_dists = {}
-        for cell_name in self.dists :
-            self.smooth_dists[cell_name] = mov_avg(self.dists[cell_name])
+    # def make_smooth_dists(self) :
+    #     """
+    #     """
+    #     # try :
+    #     #     self.dists
+    #     # except AttributeError :
+    #     #     self.init_dists()
+    #
+    #     self._smooth_dists = {}
+    #     for cell_name in self.dists :
+    #         self._smooth_dists[cell_name] = mov_avg(self.dists[cell_name])
 
 
 
@@ -484,8 +479,12 @@ class Condit :
     @property
     def smooth_dists(self) :
         if self._smooth_dists == None :
-            self.make_smooth_dists()
+            self._smooth_dists = {}
+            for cell_name in self.dists :
+                self._smooth_dists[cell_name] = mov_avg(self.dists[cell_name])
         return self._smooth_dists
+
+
     @smooth_dists.setter
     def smooth_dist(self, value) :
         self._smooth_dists = value
@@ -493,8 +492,23 @@ class Condit :
     @property
     def cleaned_dists(self) :
         if self._cleaned_dists == None :
-            self.make_cleaned_dists()
+            self._cleaned_dists = {}
+
+            for cell_name in self.smooth_dists :
+                temp_col = []
+
+                for r in range(len(self.smooth_dists[cell_name])) :
+                    if self.smooth_dists[cell_name][r] == None :
+                        temp_col.append(None)
+                    elif self.smooth_dists[cell_name][r] < Condit.DEAD_CUTOFF :
+                        temp_col.append(None)
+                    else :
+                        temp_col.append(self.dists[cell_name][r])
+
+                self._cleaned_dists[cell_name] = temp_col
+
         return self._cleaned_dists
+
     @cleaned_dists.setter
     def cleaned_dists(self, value) :
         self._cleaned_dists = value
@@ -503,7 +517,7 @@ class Condit :
     @property
     def dist_meds(self) :
         if self._dist_meds == None :
-            self.make_cen_tens()
+            self._dist_meds = col_dict_row_nanmed(self.dists)
         return self._dist_meds
     @dist_meds.setter
     def dist_meds(self, value) :
@@ -512,7 +526,7 @@ class Condit :
     @property
     def dist_means(self) :
         if self._dist_means == None :
-            self.make_cen_tens()
+            self._dist_means = col_dict_row_nanmean(self.dists)
         return self._dist_means
     @dist_means.setter
     def dist_means(self, value) :
@@ -521,7 +535,7 @@ class Condit :
     @property
     def cleaned_dist_meds(self) :
         if self._cleaned_dist_meds == None :
-            self.make_cen_tens()
+            self._cleaned_dist_meds = col_dict_row_nanmed(self.cleaned_dists)
         return self._cleaned_dist_meds
     @cleaned_dist_meds.setter
     def cleaned_dist_meds(self, value) :
@@ -530,7 +544,7 @@ class Condit :
     @property
     def cleaned_dist_means(self) :
         if self._cleaned_dist_means == None :
-            self.make_cen_tens()
+            self._cleaned_dist_means = col_dict_row_nanmean(self.cleaned_dists)
         return self._cleaned_dist_means
     @cleaned_dist_means.setter
     def cleaned_dist_means(self, value) :
@@ -549,9 +563,42 @@ class Condit :
     @property
     def coord_cols(self) :
         if self._coord_cols == None :
-            self.make_coord_cols()
+            self.make_coords()
         return self._coord_cols
     @coord_cols.setter
-    def smooth_dist(self, value) :
+    def coord_cols(self, value) :
         self._coord_cols = value
+
+
+
+    @property
+    def dead_col(self) :
+        if self._dead == None :
+            self.make_death_counts()
+        return self._dead_col
+    @dead_col.setter
+    def smooth_dist(self, value) :
+        self._dead_col = value
+
+    @property
+    def live_col(self) :
+        if self._live_col == None :
+            self.make_death_counts()
+        return self._live_col
+    @live_col.setter
+    def smooth_dist(self, value) :
+        self._live_col = value
+
+    @property
+    def none_col(self) :
+        if self._none_col == None :
+            self.make_death_counts()
+        return self._none_col
+    @none_col.setter
+    def smooth_dist(self, value) :
+        self._none_col = value
+
+
+
+
     ## </getters and setters>
