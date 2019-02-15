@@ -11,6 +11,8 @@ from .group import Group
 # from .ap_utils import *
 from brutils import *
 
+# from pathlib import Path
+
 class Exper :
     """
         * self.path
@@ -362,9 +364,16 @@ class Exper :
 
 
     def out_issue_log(self) :
+
         log_file_path = os.path.join(self.path, self.name + Exper.LOG_FILE_SUF)
+
+        # try :
         with open(log_file_path, 'a') as f :
             json.dump(self.issue_log,f,indent=4)
+        # except FileNotFoundError :
+        #     with open(log_file_path, 'w') as f :
+        #         json.dump(self.issue_log,f,indent=4)
+
 
     def helper_find_file_easy(self, pattern, sub_dir='') :
         """

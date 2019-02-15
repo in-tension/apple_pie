@@ -1,6 +1,6 @@
 
 # from .ap_utils import *
-# from brutils import *
+from brutils import *
 
 class Well :
     def __init__(self, exper, well_name, csv_path) :
@@ -8,7 +8,7 @@ class Well :
         self.name = well_name
         self.path = csv_path
 
-        self.raw_data = lever_csv_to_dict(csv_path)
+        self.raw_data = Well.lever_csv_to_dict(csv_path)
 
         ## fix distance columns
 
