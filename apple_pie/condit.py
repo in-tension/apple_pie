@@ -5,7 +5,11 @@ import xlsxwriter
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .ap_utils import *
+# from .ap_utils import *
+from brutils import *
+
+class RecordedIssue(Exception) :
+    pass
 
 
 class Condit :
