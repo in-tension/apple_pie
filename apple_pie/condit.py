@@ -103,36 +103,64 @@ class Condit :
         self._coord_cols = None
 
 
-    def make_normalized(self) :
+
+        self._dead_col = None
+        self._live_col = None
+        self._none_col = None
+
+        self._dist_mean_mean = None
+
+        self._norm_dist_means = None
+        self._norm_mean_mean = None
+
+    # def make_normalized(self) :
+
+
+    @property
+    def norm_dist_means(self) :
+        if self._norm_dist_means == None :
+
+            if self.time_point_count != self.exper.control.time_point_count :
+                print('issue in condit.normalized')
+                raise Exception
+
+            self.norm_dist_means = []
+            for t in range(self.time_point_count) :
+                self.norm_dist_means.append(self.cleaned_dist_means[t]/self.exper.control.cleaned_dist_means[t])
+        return self._norm_dist_means
+    @norm_dist_means.setter
+    def norm_dist_means(self,value) :
+        self._norm_dist_means = value
+
+
+    @property
+    def norm_mean_mean(self) :
+        if self._norm_mean_mean == None :
+            self._norm_mean_mean = np.nanmean(self.norm_dist_means)
+        return self._norm_mean_mean
+
+    @norm_mean_mean.setter
+    def norm_mean_mean(self, value) :
+        self._norm_mean_mean = value
+
+        # print('i hate everythingf')
 
 
 
 
-        if self.time_point_count != self.exper.control.time_point_count :
-            print('issue in condit.normalized')
-            raise Exception
-
-        self.norm_dist_means = []
-        for t in range(self.time_point_count) :
-            self.norm_dist_means.append(self.cleaned_dist_means[t]/self.exper.control.cleaned_dist_means[t])
-
-        self.norm_mean_mean = np.nanmean(self.norm_dist_means)
-
-        print('i hate everything')
 
 
+    @property
+    def dist_mean_mean(self) :
 
-
-
-
-
-    def means_of_means(self) :
-
-
+        if self._dist_mean_mean == None :
         # takes mean of each time point, and not of every cell velocity
         # a cell velocity in a time point with less data
-        self.dist_mean_mean = np.nanmean(self.dist_means)
-
+            self._dist_mean_mean = np.nanmean(self.dist_means)
+        return self._dist_mean_mean
+    @dist_mean_mean.setter
+    def dist_mean_mean(self, value) :
+        self._dist_mean_mean = value
 
 
     # def make_cen_tens(self) :
