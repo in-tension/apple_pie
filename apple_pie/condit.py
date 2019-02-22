@@ -13,6 +13,7 @@ class RecordedIssue(Exception) :
 
 
 class Condit :
+    #{
     """
 
     Attributes
@@ -49,6 +50,7 @@ class Condit :
 
 
     """
+    #}
     DEAD_CUTOFF = 3
     DEAD_FRAME_COUNT = 10
     UPPER_CUTOFF = 50
@@ -71,7 +73,7 @@ class Condit :
 
             self.init_dists()
 
-            # self.make_cleaned_dists()
+            # {self.make_cleaned_dists()
             #
             # col_dict_np_nan(self.dists)
             # col_dict_np_nan(self.cleaned_dists)
@@ -84,12 +86,12 @@ class Condit :
             # except :
             #     self.record_issue('cell.__init__ calling col_dict_row_nan<med>(self.<>dists)',['this can be caused by some columns having more time points than other columns'])
             #self.dists = {}
-            # """ dists """
+            # }""" dists """
 
 
         except RecordedIssue :
             pass
-
+        #{
         self._smooth_dists = None
         self._cleaned_dists = None
 
@@ -112,6 +114,7 @@ class Condit :
 
         self._norm_dist_means = None
         self._norm_mean_mean = None
+        #}
 
     # def make_normalized(self) :
 
@@ -302,7 +305,7 @@ class Condit :
             self._coords[cell_name] = temp_cell_coords
 
 
-    # def make_cleaned_dists(self) :
+    #{ def make_cleaned_dists(self) :
     #     """
     #         creates ``self.cleaned_dists`` with "dead" cells removed
     #     """
@@ -325,7 +328,7 @@ class Condit :
     #             else :
     #                 temp_col.append(self.dists[cell_name][r])
     #
-    #         self._cleaned_dists[cell_name] = temp_col
+    # }        self._cleaned_dists[cell_name] = temp_col
 
 
     def make_death_counts(self) :
@@ -366,7 +369,7 @@ class Condit :
             self._none_col.append(none)
 
 
-    # def make_smooth_dists(self) :
+    # {def make_smooth_dists(self) :
     #     """
     #     """
     #     # try :
@@ -376,7 +379,7 @@ class Condit :
     #
     #     self._smooth_dists = {}
     #     for cell_name in self.dists :
-    #         self._smooth_dists[cell_name] = mov_avg(self.dists[cell_name])
+    #   }      self._smooth_dists[cell_name] = mov_avg(self.dists[cell_name])
 
 
 
@@ -405,7 +408,7 @@ class Condit :
 
 
     ## <all functions called inside __init__>
-    def init_dists(self) :
+    def init_dists_old(self) :
         """
             | gets distance columns from wells
             | removes weird zeros and leading and trailing blank rows
@@ -417,6 +420,53 @@ class Condit :
             * time_point_count (init_trim_dists)
             * t_int
         """
+
+        self.dists = {}
+        """ dists """
+
+        for well in self.wells.values() :
+            for key in well.raw_data.keys() :
+                if key[1] == self.exper.COLS_5[4] :
+                    self.dists[(well.name,'cell {}'.format(key[0]))] = well.raw_data[key]
+
+        for col in self.dists.values() :
+            for i in range(len(col)) :
+                if col[i] == '' :
+                    col[i] = None
+                else :
+                    try :
+                        col[i] = float(col[i])
+                    except :
+                        print("oh no, well csv value not a number")
+
+        self.cell_count = len(self.dists.keys())
+
+        check_count = 0
+        for well in self.wells.values() :
+            check_count += well.cell_count
+        if check_count != self.cell_count :
+            print('fuck, condit cell_count wrong')
+
+        self.init_fix_dists_zeros()
+        self.init_trim_dists()
+        self.init_remove_upper_outliers()
+        #self.t_int = [x/6 for x in range(1,self.time_point_count+1)]
+        self.t_int = self.exper.make_t_int(self.time_point_count)
+
+    def init_dists(self) :
+        # {
+        """
+            | gets distance columns from wells
+            | removes weird zeros and leading and trailing blank rows
+
+            creates
+
+            * dists
+            * cell_count
+            * time_point_count (init_trim_dists)
+            * t_int
+        """
+        # }
 
         self.dists = {}
         """ dists """

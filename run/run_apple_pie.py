@@ -1,8 +1,7 @@
-# from ..apple_pie import posse
 import sys
 import os
 
-# append module root directory to sys.path
+## append module root directory to sys.path
 sys.path.append(
     os.path.dirname(
         os.path.dirname(
@@ -10,9 +9,8 @@ sys.path.append(
         )
     )
 )
-# print(os.path.abspath(__file__))
+
+
 from apple_pie import *
-# p = ThePosse()
-#p = make_rh30_posse()
-# p = make_loc_posse()
+
 e = dataset_paths.make_cur_exper()

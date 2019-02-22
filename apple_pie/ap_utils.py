@@ -1,2 +1,0 @@
-class RecordedIssue(Exception) :
-    pass

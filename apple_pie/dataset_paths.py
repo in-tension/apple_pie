@@ -7,9 +7,10 @@ RH30_PATH = pjoin(RHABDO_ROOT, 'RH30')      ## mac only
 
 RHABDO_LOC = '/Users/baylieslab/Documents/Amelia/data/rhabdo'
 EXP18_18_11_09_DIR = '18-11-09.ap'
+EXP18_18_11_06_DIR = '18-11-06.ap'
 
 
-cur_dataset_path = pjoin(RHABDO_LOC, EXP18_18_11_09_DIR)
+cur_dataset_path = pjoin(RHABDO_LOC, EXP18_18_11_06_DIR)
 
 
 
