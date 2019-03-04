@@ -639,7 +639,7 @@ class Condit :
             self.make_coords()
         return self._coords
     @coords.setter
-    def smooth_dist(self, value) :
+    def coords(self, value) :
         self._coords = value
 
     @property
@@ -659,7 +659,7 @@ class Condit :
             self.make_death_counts()
         return self._dead_col
     @dead_col.setter
-    def smooth_dist(self, value) :
+    def dead_col(self, value) :
         self._dead_col = value
 
     @property
@@ -668,7 +668,7 @@ class Condit :
             self.make_death_counts()
         return self._live_col
     @live_col.setter
-    def smooth_dist(self, value) :
+    def live_col(self, value) :
         self._live_col = value
 
     @property
@@ -677,7 +677,7 @@ class Condit :
             self.make_death_counts()
         return self._none_col
     @none_col.setter
-    def smooth_dist(self, value) :
+    def none_col(self, value) :
         self._none_col = value
 
 

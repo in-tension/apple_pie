@@ -34,5 +34,10 @@ class Group :
             self._condit_strs.append(condit.name_str)
 
         return self._condit_strs
+    @condit_strs.setter
+    def norm_mean_mean(self, value) :
+        self._condit_strs = value
+
+        #
 
     # @condit_strs.setter
