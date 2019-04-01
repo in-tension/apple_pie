@@ -271,12 +271,7 @@ class Condit :
     ## this function could probably be more efficient
     ## this function could probably more compact w/ less steps but I don't know if it would increase or decrease readability
     def make_coords(self) :
-        """
-            | goes through ``self.wells`` and creates ``self._coords``
-            | a ``ColDict`` of the coordinates of cells in condit
 
-            .. note: assumes every x has a y before the next x
-        """
         self._coord_cols = {}
 
         ## change this to for well_name in self.wells
@@ -305,40 +300,8 @@ class Condit :
             self._coords[cell_name] = temp_cell_coords
 
 
-    #{ def make_cleaned_dists(self) :
-    #     """
-    #         creates ``self.cleaned_dists`` with "dead" cells removed
-    #     """
-    #
-    #     # try :
-    #     #     self.dead_col
-    #     # except :
-    #     #     self.make_death_counts()
-    #
-    #     self._cleaned_dists = {}
-    #
-    #     for cell_name in self.smooth_dists :
-    #         temp_col = []
-    #
-    #         for r in range(len(self.smooth_dists[cell_name])) :
-    #             if self.smooth_dists[cell_name][r] is None :
-    #                 temp_col.append(None)
-    #             elif self.smooth_dists[cell_name][r] < Condit.DEAD_CUTOFF :
-    #                 temp_col.append(None)
-    #             else :
-    #                 temp_col.append(self.dists[cell_name][r])
-    #
-    # }        self._cleaned_dists[cell_name] = temp_col
-
 
     def make_death_counts(self) :
-        """
-            for each timepoint
-            makes self.
-            * _dead_col
-            * _live_col
-            * _none_col
-        """
 
 
         self._dead_col = []

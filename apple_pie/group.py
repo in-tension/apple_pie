@@ -10,7 +10,7 @@ class Group :
 
 
     def add_condit(self, condit) :
-        if self.condits == None :
+        if self.condits is None :
             self.condits = {condit.name:condit}
         elif condit.name in self.condits :
             print('uh oh, issue in Group.add_condit()')
@@ -35,7 +35,7 @@ class Group :
 
         return self._condit_strs
     @condit_strs.setter
-    def norm_mean_mean(self, value) :
+    def condit_strs(self, value) :
         self._condit_strs = value
 
         #
