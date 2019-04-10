@@ -14,7 +14,7 @@ from sphinx.ext.autodoc import cut_lines
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
-
+sys.path.insert(0, os.path.abspath('/usr/local/lib/python3.7/site-packages/brutils/'))
 # -- General configuration ------------------------------------------------
 
 project = 'apple_pie'
@@ -36,6 +36,8 @@ html_theme = 'python_docs_theme'
 
 extensions = [
     'sphinx.ext.autodoc',
+    # 'sphinx_autodoc_annotation',
+
     'sphinx.ext.doctest',
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
@@ -52,11 +54,11 @@ intersphinx_mapping = {
     'theano': ('http://theano.readthedocs.org/en/latest/', None),
     'numpy': ('http://docs.scipy.org/doc/numpy/', None),
     'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
-    'python': ('http://docs.python.org/3.4', None)
+    'python': ('http://docs.python.org/3.7', None)
 }
-autodoc_member_order = 'bysource'
+autodoc_member_order = 'groupwise' #'bysource'
 autoclass_content = 'both'
-autodoc_default_flags = ['members']#,'undoc-members']
+autodoc_default_flags = ['members','undoc-members']
 # autoclass_content = 'both'
 
 #
@@ -106,7 +108,7 @@ exclude_patterns = ['_build']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-html_static_path = ['_static']
+# html_static_path = ['_static']
 #
 #
 # htmlhelp_basename = 'Blocksdoc'
@@ -122,7 +124,7 @@ html_static_path = ['_static']
 
 
 def setup(app):
-    app.connect('autodoc-process-docstring', cut_lines(2, what=['module']))
+    pass# app.connect('autodoc-process-docstring', cut_lines(2, what=['module']))
 
 
 def linkcode_resolve(domain, info):

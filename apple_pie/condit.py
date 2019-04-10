@@ -15,40 +15,6 @@ class RecordedIssue(Exception) :
 class Condit :
 
     """
-
-    Attributes
-    ----------
-    exper : Exper
-        parent
-    name : tuple
-        set of terms that identify this `Condit`
-    name_str : str
-        a string version of name
-
-    wells : `list`[ `Well` ]
-        a list of the Wells belonging to this `Condit`
-    dists : col_dict
-        asdfsdf
-
-    * cell_count
-    * time_point_count
-    * t_int
-
-    can have: self.
-
-    * smooth_dists
-    * cleaned_dists
-
-    * dist_meds
-    * dist_means
-
-    * cleaned_dist_meds
-    * cleaned_dist_means
-
-    * coords
-    * coord_cols
-
-
     """
 
     DEAD_CUTOFF = 3
@@ -60,7 +26,9 @@ class Condit :
         """
         """
         try :
+
             self.exper = exper
+            """ """
             self.name = name
             self.name_str = tuple_to_str(self.name)
 
@@ -92,6 +60,7 @@ class Condit :
         except RecordedIssue :
             pass
         #{
+
         self._smooth_dists = None
         self._cleaned_dists = None
 
@@ -120,7 +89,9 @@ class Condit :
 
 
     @property
+
     def norm_dist_means(self) :
+        """ """
         if self._norm_dist_means is None :
 
             if self.time_point_count != self.exper.control.time_point_count :
@@ -261,8 +232,10 @@ class Condit :
         self.out_to_sheet(w_book,self.cleaned_dists)
 
 
-
     def helper_xlsx_formats(self, w_sheet, r1, c1, r2, c2) :
+        """
+
+        """
         w_sheet.conditional_format(r1,c1,r2,c2, self.exper.format_dicts['yellow'])
         w_sheet.conditional_format(r1,c1,r2,c2, self.exper.format_dicts['red'])
         w_sheet.conditional_format(r1,c1,r2,c2, self.exper.format_dicts['white'])
