@@ -8,6 +8,9 @@ import numpy as np
 # from .ap_utils import *
 from brutils import *
 
+
+from . import hdings
+
 class RecordedIssue(Exception) :
     pass
 
@@ -20,6 +23,8 @@ class Condit :
     DEAD_CUTOFF = 3
     DEAD_FRAME_COUNT = 10
     UPPER_CUTOFF = 50
+
+
 
 
     def __init__(self, exper, name, well_names) :
@@ -191,9 +196,9 @@ class Condit :
         temp_dead_col = [l+d for l,d in zip(self.live_col,self.dead_col)]
         temp_none_col = [d+n for d,n in zip(temp_dead_col,self.none_col)]
 
-        ax.fill_between(self.t_int, self.live_col,label = 'live cells', step='mid', color='#846cfc')
-        ax.fill_between(self.t_int, temp_dead_col, y2=self.live_col, label = 'dead cells', step='mid', color='#87ffad')
-        ax.fill_between(self.t_int, temp_none_col, y2=temp_dead_col, label='no data', step='mid', color='#ffa0ce')
+        ax.fill_between(self.t_int, self.live_col,label = 'live cells', step='mid', color='#B47C45')
+        ax.fill_between(self.t_int, temp_dead_col, y2=self.live_col, label = 'dead cells', step='mid', color='#1F77B4')
+        ax.fill_between(self.t_int, temp_none_col, y2=temp_dead_col, label='no data', step='mid', color='#dbdbdb')
 
         ax.set_ylim((0,60))
         ax.legend()
@@ -426,7 +431,7 @@ class Condit :
         #self.t_int = [x/6 for x in range(1,self.time_point_count+1)]
         self.t_int = self.exper.make_t_int(self.time_point_count)
 
-    def init_dists(self) :
+    def init_dists_old2(self):
         # {
         """
             | gets distance columns from wells
@@ -444,34 +449,61 @@ class Condit :
         self.dists = {}
         """ dists """
 
-        for well in self.wells.values() :
-            for key in well.raw_data.keys() :
-                if key[1] == self.exper.COLS_5[4] :
-                    self.dists[(well.name,'cell {}'.format(key[0]))] = well.raw_data[key]
+        for well in self.wells.values():
+            for key in well.raw_data.keys():
+                if key[1] == self.exper.COLS_5[4]:
+                    self.dists[(well.name, 'cell {}'.format(key[0]))] = well.raw_data[key]
 
-        for col in self.dists.values() :
-            for i in range(len(col)) :
-                if col[i] == '' :
+        for col in self.dists.values():
+            for i in range(len(col)):
+                if col[i] == '':
                     col[i] = None
-                else :
-                    try :
+                else:
+                    try:
                         col[i] = float(col[i])
-                    except :
+                    except:
                         print("oh no, well csv value not a number")
 
         self.cell_count = len(self.dists.keys())
 
         check_count = 0
-        for well in self.wells.values() :
+        for well in self.wells.values():
             check_count += well.cell_count
-        if check_count != self.cell_count :
+        if check_count != self.cell_count:
             print('fuck, condit cell_count wrong')
 
         self.init_fix_dists_zeros()
         self.init_trim_dists()
         self.init_remove_upper_outliers()
-        #self.t_int = [x/6 for x in range(1,self.time_point_count+1)]
+        # self.t_int = [x/6 for x in range(1,self.time_point_count+1)]
         self.t_int = self.exper.make_t_int(self.time_point_count)
+
+    def init_dists(self) :
+        # {
+        """
+            | gets distance columns from wells
+            | removes weird zeros and leading and trailing blank rows
+
+            creates
+
+            * dists
+            * cell_count
+            * time_point_count (init_trim_dists)
+            * t_int
+        """
+        # }
+
+        self.dists = {}
+        """ dists """
+        well_keys = self.wells.keys()
+
+        self.dists = self.wells[well_keys[0]]
+        for well_key in well_keys[1:] :
+            self.dists.append(self.wells[well_key])
+        self.frame_count = self.dists[hdings.C_ID].max()
+
+
+        self.t_int = self.exper.make_t_int(self.frame_count-1)
 
     def init_fix_dists_zeros(self) :
         pattern = [None, 0.0]
@@ -572,6 +604,7 @@ class Condit :
     @property
     def dist_meds(self) :
         if self._dist_meds is None :
+
             self._dist_meds = col_dict_row_nanmed(self.dists)
         return self._dist_meds
     @dist_meds.setter
