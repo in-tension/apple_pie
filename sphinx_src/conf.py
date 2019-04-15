@@ -14,11 +14,12 @@ from sphinx.ext.autodoc import cut_lines
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('/usr/local/lib/python3.7/site-packages/brutils/'))
+sys.path.insert(0, os.path.abspath('/usr/local/lib/python3.7/site-packages/'))
+# sys.path.insert(0, os.path.abspath('/usr/local/lib/python3.7/site-packages/brutils/'))
 # -- General configuration ------------------------------------------------
 
 project = 'apple_pie'
-copyright = '2018, Amelia Brown'
+# copyright = '2018, Amelia Brown'
 author = 'Amelia Brown'
 
 #

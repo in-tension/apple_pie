@@ -1,7 +1,7 @@
 
 # from .ap_utils import *
 from brutils import *
-
+import pandas as pd
 class Well :
     def __init__(self, exper, well_name, csv_path) :
         self.exper = exper
@@ -26,8 +26,11 @@ class Well :
         """
         return self.__str__()
 
+
+    # TODO deal with old/new function in a reasonable way
+
     @staticmethod
-    def lever_csv_to_dict(csv_path) :
+    def lever_csv_to_dict_old(csv_path):
         """
             5 cols, not 4
         """
@@ -36,9 +39,26 @@ class Well :
         col_dict = {}
 
         ## ce as in cell, co as in col
-        for ce in range(0,len(cols),5) :
-            for co in range(0,5) :
-                col_tuple_key = (cols[ce][0], cols[ce+co][3])
-                col_dict[col_tuple_key] = cols[ce+co][4:]
+        for ce in range(0, len(cols), 5):
+            for co in range(0, 5):
+                col_tuple_key = (cols[ce][0], cols[ce + co][3])
+                col_dict[col_tuple_key] = cols[ce + co][4:]
 
         return col_dict
+
+
+    @staticmethod
+    def lever_csv_to_dict(csv_path) :
+        """
+            output with all cells in same columns, labelled with track id
+        """
+        CELL_IDFYIER = 'Track ID'
+
+        df = pd.read_csv(csv_path)
+
+        cell_ids = set(df[CELL_IDFYIER])
+        cells = {}
+        for cell_id in cell_ids:
+            cells[cell_id] = df[df[CELL_IDFYIER] == cell_id]
+
+        return cells
