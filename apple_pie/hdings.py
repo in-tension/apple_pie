@@ -8,3 +8,4 @@ T_ID = 'Track ID'
 DEATH = 'Label'
 
 WELL = 'Well'
+DIST = 'Distance'

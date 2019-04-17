@@ -2,6 +2,7 @@
 # from .ap_utils import *
 from brutils import *
 import pandas as pd
+import dfgui
 
 from . import hdings
 class Well :
@@ -12,7 +13,9 @@ class Well :
 
         #self.raw_data = Well.lever_csv_to_dict(csv_path)
         self.cdf = pd.read_csv(csv_path)
+        # print(type)
         self.cdf[hdings.WELL] = self.name
+        self.cdf[hdings.DIST] = np.nan
 
 
         ## fix distance columns
@@ -35,9 +38,29 @@ class Well :
         return self.__str__()
 
     def create_dists(self) :
-        pass
+        # print('create_dists')
+        # count = 0
+        self.cdf = self.cdf.groupby(hdings.T_ID).apply(create_df_dists2,hdings.X,hdings.Y,hdings.DIST,hdings.FRAME)
+        # for i,g in self.cdf.groupby(hdings.T_ID) :
+        #     # self.g = g
+        #     print('create_df_dists: cell {}'.format(g[hdings.T_ID].iloc[0]))
+        #
+        #     create_df_dists2(g,hdings.X,hdings.Y,hdings.DIST,hdings.FRAME)
+        #     count +=1
+        #print('cell count: {}'.format(count))
+        #temp_df = pd.DataFrame(self.cdf.to_records(index=False)) # multiindex become columns and new index is integers only
 
+        # dfgui.show(temp_df)
 
+        # print(self.cdf.columns)
+
+        # print(self.cdf)
+
+        # print(self.cdf[hdings.DIST])#, hdings.FRAME])
+        # self.np_df = self.cdf.values
+        self.cdf = self.cdf.reset_index(drop=True)
+        self.one = self.cdf.iloc[:900, :]
+        self.two = self.cdf.iloc[900:, :]
 
     # TODO deal with old/new function in a reasonable way
 
