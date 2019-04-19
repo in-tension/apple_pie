@@ -40,13 +40,16 @@ x = ap.hdings.FRAME
 y = ap.hdings.DIST
 
 
+import matplotlib as mpl
+
+
 class Butts(object):
 
     def __init__(self, grouped,x,y):
         self.grouped = grouped
         self.groups = list(grouped.groups.keys())
         self.ind = 0
-        plt.figure(figsize=(20, 10))
+        plt.figure(figsize=(10, 5))
         #self.fig = plt.figure()
         #plt.plot()
         #self.cur_group().plot(x, y)
@@ -61,6 +64,38 @@ class Butts(object):
         # self.ax = plt.gca()
         # plt.plot(self.cur_group()[ap.hdings.FRAME], self.cur_group()[ap.hdings.DIST], 'bo')
 
+    #@staticmethod
+    def on_key_press(self,event):
+        # print('butts')
+        # print(event.key)
+        print(self)
+        if event.key == "left" :
+            print('l')
+            self.ind -= 1
+
+            # # for i, line in enumerate(self.ax.lines):
+            # # self.ax.lines.pop(i)
+            # # line.remove()
+            # # self.ax.lines.pop(0).remove()
+            # self.ax.cla()
+            # self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+            # self.ax.set_xlim(0, 120)
+            # self.ax.set_ylim(-10, 100)
+            # plt.draw()
+            self.plot()
+
+        elif event.key == "right" :
+            print('r')
+            self.ind += 1
+            self.ax.cla()
+            self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+            self.ax.set_xlim(0, 120)
+            self.ax.set_ylim(-10, 100)
+            plt.draw()
+
+
+    def __str__(self) :
+        return(str(self.groups))
     def next(self, event):
         #         print('next')
         self.ind += 1
@@ -71,7 +106,8 @@ class Butts(object):
             #line.remove()
         #self.ax.lines.pop(0).remove()
         self.ax.cla()
-        self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+        #self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+        self.cur_group().plot(x,y,kind='scatter', ax=self.ax)
         self.ax.set_xlim(0, 120)
         self.ax.set_ylim(-10, 100)
 
@@ -89,10 +125,20 @@ class Butts(object):
         # self.ax.plot(self.cur_group()[ap.hdings.FRAME], self.cur_group()[ap.hdings.DIST], 'bo')
 
     #         self.plot2()
+    def plot(self) :
+        self.ax.cla()
+        # self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+        self.cur_group().plot(x, y, kind='scatter', ax=self.ax)
+        self.ax.set_xlim(0, 120)
+        self.ax.set_ylim(-10, 100)
+
+        plt.draw()
+
 
     def prev(self, event):
         #         print('prev')
         self.ind -= 1
+        self.ax.cla()
         self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
         self.ax.set_xlim(0, 120)
         self.ax.set_ylim(-10, 100)
@@ -134,6 +180,8 @@ bnext = Button(axnext, 'Next')
 bprev = Button(axprev, 'Prev')
 bnext.on_clicked(gb.next)
 bprev.on_clicked(gb.prev)
+
+plt.gcf().canvas.mpl_connect("key_press_event", gb.on_key_press)
 
 # plt.figure()
 #

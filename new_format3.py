@@ -24,9 +24,9 @@ ipy.magic('matplotlib osx')
 
 from matplotlib.widgets import Button
 
-well_file = '/Volumes/baylieslab/Current Lab Members/Whitney/Rhabdo Project/Tissue Culture/Timelapse/Rhabdomyosarcoma plate movies/Post-mycoplasma data (starting 9:18:18)/RH30/18-11-07.rht/Csv/B02.csv'
+well_file = '/Volumes/baylieslab/Current Lab Members/Whitney/Rhabdo Project/Tissue Culture/Timelapse/Rhabdomyosarcoma plate movies/Post-mycoplasma data (starting 9:18:18)/RH30/18-11-07.rht/Csv/B17.csv'
 
-well_name = 'B02'
+well_name = 'B17'
 
 w = ap.Well('exper',well_name,well_file)
 
@@ -40,40 +40,90 @@ x = ap.hdings.FRAME
 y = ap.hdings.DIST
 
 
+import matplotlib as mpl
+
+
 class Butts(object):
 
     def __init__(self, grouped,x,y):
         self.grouped = grouped
         self.groups = list(grouped.groups.keys())
         self.ind = 0
-        plt.figure(figsize=(20, 10))
-        #self.fig = plt.figure()
-        #plt.plot()
-        #self.cur_group().plot(x, y)
-        plt.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+        plt.figure(figsize=(10, 5))
+
         self.ax = plt.gca()
-        self.ax.set_xlim(0, 120)
-        self.ax.set_ylim(-10, 100)
-        plt.show()
+
+        self.plot()
+        # plt.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+        # self.ax.set_xlim(0, 120)
+        # self.ax.set_ylim(-10, 100)
+        # plt.show()
 
         #         self.l, = self.cur_group().plot(x=ap.hdings.FRAME,y=ap.hdings.DIST, kind="scatter")
         # self.l, = plt.plot(self.cur_group()[ap.hdings.FRAME],self.cur_group()[ap.hdings.DIST], 'bo')
         # self.ax = plt.gca()
         # plt.plot(self.cur_group()[ap.hdings.FRAME], self.cur_group()[ap.hdings.DIST], 'bo')
 
+    #@staticmethod
+    def on_key_press(self,event):
+        # print('butts')
+        # print(event.key)
+        # print(self)
+        if event.key == "left" :
+            # print('l')
+            self.decr()
+
+            # # for i, line in enumerate(self.ax.lines):
+            # # self.ax.lines.pop(i)
+            # # line.remove()
+            # # self.ax.lines.pop(0).remove()
+            # self.ax.cla()
+            # self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+            # self.ax.set_xlim(0, 120)
+            # self.ax.set_ylim(-10, 100)
+            # plt.draw()
+            self.plot()
+
+        elif event.key == "right" :
+            # print('r')
+            self.incr()
+            self.plot()
+            # self.ax.cla()
+            # self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+            # self.ax.set_xlim(0, 120)
+            # self.ax.set_ylim(-10, 100)
+            # plt.draw()
+
+
+    def __str__(self) :
+        return(str(self.groups))
+
+    def incr(self):
+        self.ind += 1
+        while len(self.cur_group()) < 5 :
+            self.ind += 1
+
+
+    def decr(self) :
+        self.ind -= 1
+        while len(self.cur_group()) < 5 :
+            self.ind -= 1
+
+
     def next(self, event):
         #         print('next')
-        self.ind += 1
-
+        self.incr()
+        self.plot()
 
         #for i, line in enumerate(self.ax.lines):
             #self.ax.lines.pop(i)
             #line.remove()
         #self.ax.lines.pop(0).remove()
-        self.ax.cla()
-        self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
-        self.ax.set_xlim(0, 120)
-        self.ax.set_ylim(-10, 100)
+        # self.ax.cla()
+        # #self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+        # self.cur_group().plot(x,y,kind='scatter', ax=self.ax)
+        # self.ax.set_xlim(0, 120)
+        # self.ax.set_ylim(-10, 100)
 
         # l = lines[0]
         # l.remove()
@@ -89,14 +139,29 @@ class Butts(object):
         # self.ax.plot(self.cur_group()[ap.hdings.FRAME], self.cur_group()[ap.hdings.DIST], 'bo')
 
     #         self.plot2()
+    def plot(self) :
+        self.ax.cla()
+        # self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+        # plt.title('Cell {}'.format(self.groups[self.ind]),loc='center')
+        # plt.title('Cell {}'.format(self.groups[self.ind]),loc='center')
+        # plt.title('Cell {}'.format(self.groups[self.ind]),loc='center')
+        self.ax.set_title('Cell {}'.format(self.groups[self.ind]))
+        self.cur_group().plot(x, y, kind='scatter', ax=self.ax)
+        self.ax.set_xlim(0, 120)
+        self.ax.set_ylim(-10, 100)
+
+        plt.draw()
+
 
     def prev(self, event):
         #         print('prev')
-        self.ind -= 1
-        self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
-        self.ax.set_xlim(0, 120)
-        self.ax.set_ylim(-10, 100)
-        # self.plot()
+        self.decr()
+        self.plot()
+        # self.ax.cla()
+        # self.ax.plot(self.cur_group()[x], self.cur_group()[y], 'bo')
+        # self.ax.set_xlim(0, 120)
+        # self.ax.set_ylim(-10, 100)
+        # # self.plot()
         # self.ax.plot(self.cur_group()[ap.hdings.FRAME], self.cur_group()[ap.hdings.DIST], 'bo')
         #
         # self.plot2()
@@ -134,6 +199,8 @@ bnext = Button(axnext, 'Next')
 bprev = Button(axprev, 'Prev')
 bnext.on_clicked(gb.next)
 bprev.on_clicked(gb.prev)
+
+plt.gcf().canvas.mpl_connect("key_press_event", gb.on_key_press)
 
 # plt.figure()
 #

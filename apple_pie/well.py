@@ -37,6 +37,7 @@ class Well :
         """
         return self.__str__()
 
+
     def create_dists(self) :
         # print('create_dists')
         # count = 0
@@ -58,9 +59,9 @@ class Well :
 
         # print(self.cdf[hdings.DIST])#, hdings.FRAME])
         # self.np_df = self.cdf.values
-        self.cdf = self.cdf.reset_index(drop=True)
-        self.one = self.cdf.iloc[:900, :]
-        self.two = self.cdf.iloc[900:, :]
+        self.cdf.reset_index(drop=True)
+        # self.one = self.cdf.iloc[:900, :]
+        # self.two = self.cdf.iloc[900:, :]
 
     # TODO deal with old/new function in a reasonable way
 
