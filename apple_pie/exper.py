@@ -58,23 +58,23 @@ class Exper :
         try :
             self.issue_log = {}
 
-            all_t = ptic("all exper init")
+            all_t = dtic("all exper init")
 
             self.path = exper_path
 
             ### make it so this checks for / at end of path
-            self.name = os.path.basename(self.path)
+            self.name = os.path.basename(self.path).replace('.ap', '')
             self.init_paths_pm()
 
-            well_t = ptic('reading in wells')
+            well_t = dtic('reading in wells')
             self.init_wells()
-            ptoc(well_t)
+            dtoc(well_t)
 
             self.init_condits()
 
             #self.dists_to_xlsx2()
 
-            ptoc(all_t)
+            dtoc(all_t)
 
             #self.out_plot_a()
 
@@ -86,6 +86,10 @@ class Exper :
         finally :
             self.out_issue_log()
 
+
+
+    def __getitem__(self,term) :
+        return self.condits[term]
 
     def init_groups(self, tup_ind=0) :
         ## tup_ind -> tuple_index :
@@ -367,12 +371,13 @@ class Exper :
 
         log_file_path = os.path.join(self.path, self.name + Exper.LOG_FILE_SUF)
 
-        # try :
-        with open(log_file_path, 'a') as f :
-            json.dump(self.issue_log,f,indent=4)
-        # except FileNotFoundError :
-        #     with open(log_file_path, 'w') as f :
-        #         json.dump(self.issue_log,f,indent=4)
+        try :
+            with open(log_file_path, 'a') as f :
+                json.dump(self.issue_log,f,indent=4)
+        except FileNotFoundError :
+
+            with open(log_file_path, 'w+') as f :
+                json.dump(self.issue_log,f,indent=4)
 
 
     def helper_find_file_easy(self, pattern, sub_dir='') :

@@ -37,14 +37,17 @@ class Condit :
             self.name = name
             self.name_str = tuple_to_str(self.name)
 
+            self.data = self.exper.wells[well_names[0]]
             self.wells = {}
-            for well_name in well_names :
+            for well_name in well_names[1:] :
                 try :
                     self.wells[well_name] = self.exper.wells[well_name]
+                    # self.wells.append(self.exper.wells[well_name])
+                    self.wells[well_name].set_condit(self)
                 except :
                     self.record_issue('cell.__init__(...)',['missing well'],well=[well_name])
 
-            self.init_dists()
+            # self.init_dists()
 
             # {self.make_cleaned_dists()
             #
@@ -92,6 +95,8 @@ class Condit :
 
     # def make_normalized(self) :
 
+    def __getitem__(self, term) :
+        return self.wells[term]
 
     @property
 
@@ -363,7 +368,7 @@ class Condit :
 
     def record_issue(self, method_name, msg, well=None, cell=None, assoc_files=None) :
 
-        info_list = [(datetime.today().strftime('%y-%m-%d %H:%M'))]
+        info_list = [(datetime.datetime.today().strftime('%y-%m-%d %H:%M'))]
         #info_list = [(datetime.datetime.today().strftime('%y-%m-%d %H:%M'))]
         # info_list = [(datetime.datetime.today().isoformat())]
 
@@ -500,7 +505,7 @@ class Condit :
         self.dists = self.wells[well_keys[0]]
         for well_key in well_keys[1:] :
             self.dists.append(self.wells[well_key])
-        self.frame_count = self.dists[hdings.C_ID].max()
+        self.frame_count = self.dists[hdings.FRAME].max()
 
 
         self.t_int = self.exper.make_t_int(self.frame_count-1)
