@@ -4,6 +4,10 @@ import pandas as pd
 from termcolor import colored
 import matplotlib as mpl
 # from matplotlib import cm
+from scipy.misc import imread
+from os.path import join as pjoin
+
+
 
 from . import hdings
 from . import hdings as hs
@@ -78,8 +82,8 @@ class Well :
     def remake_df1(self) :
         cell_keys = list(self.cells.keys())
         #self.cdf2 = pd.DataFrame(self.cells[cell_keys[0]])
-        combined = self.cells[cell_keys[0]]
-        keys = set(combined.keys())
+        self.combined = self.cells[cell_keys[0]]
+        keys = set(self.combined.keys())
 
         for cell_key in cell_keys[1:] :
             to_add = self.cells[cell_key]
@@ -87,9 +91,9 @@ class Well :
                 raise Exception
             else :
                 for key in keys :
-                    combined[key].extend(to_add[key])
+                    self.combined[key].extend(to_add[key])
 
-        self.cdf2 = pd.DataFrame(combined)
+        self.cdf2 = pd.DataFrame(self.combined)
 
         #self.cdf2.append(pd.DataFrame(self.cells[cell_key]))
 
@@ -147,12 +151,12 @@ class Well :
 
 
     def plot_looper(self) :
-        WellPlotLooper(hdings.X, hdings.Y, self.cdf2, hdings.T_ID, hdings.FRAME, hdings.DIST, title=str(self), some_condition=Well.some_condition)
+        WellPlotLooper(self.cdf2,  hdings.T_ID, hdings.FRAME, hdings.DIST, hdings.X, hdings.Y, self.exper.path, self.name, title=str(self), some_condition=Well.some_condition)
 
 
 class WellPlotLooper(DfPlotLooper2) :
-
-    def __init__(self, x_name2, y_name2, *args, **kwargs) :
+    MAX_PROJECT_DIR = 'Czi/max_projection_gifs'
+    def __init__old(self, x_name2, y_name2, *args, **kwargs) :
         self.x_name2 = x_name2
         # print(self.x_name2)
         self.y_name2 = y_name2
@@ -164,26 +168,83 @@ class WellPlotLooper(DfPlotLooper2) :
         # self.ax1 =
         # self.ax2 = self.fig.add_subplot(1,2,2)
 
+    def __init__(self, well_df, group_by_col, frame_col, dist_col, x_col, y_col, exper_path, well_name, title=None, override_defaults=None, some_condition=None) :
+        """
+            | :param: override_defaults : `dict` with keys of settings to override and the desired values
+            | :param: some_condition : a function which takes the `cur_group()` and returns False if it should not be plotted and `incr`/`decr` should be called again,
+            | when equal None, doesn't do the test and plots every group
+        """
+        #
+        # self.exper_path = exper_path
+        # self.well_name = well_name
 
-    def sub_class_init(self):
+        out_folder = pjoin(exper_path, WellPlotLooper.MAX_PROJECT_DIR)
+        self.out_path = self.helper_find_file(out_folder, well_name)
+        # return out_path
+
+        self.settings = DfPlotLooper2.DEFAULTS
+        if override_defaults != None:
+            for key in override_defaults:
+                self.settings[key] = override_defaults[key]
+
+        self.grouped_df = well_df.groupby(group_by_col)
+        self.group_by_col = group_by_col
+        self.group_names = list(self.grouped_df.groups.keys())
+        self.ind = 0
+        self.max_ind = len(self.group_names)
+
+        self.frame_col = frame_col
+        self.dist_col = dist_col
+        self.x_col = x_col
+        self.y_col = y_col
+
+        self.title = title
+        self.some_condition = some_condition
+
+        # self.fig = plt.figure(figsize=self.settings['figsize'],tight_layout=True)
+        self.fig = plt.figure(figsize=self.settings['figsize'])  # ,tight_layout=True)
+        if self.title != None:
+            self.fig.suptitle(self.title)
+        self.fig.show()
+
+
+
+        self.cmap_array = mpl.cm.get_cmap('viridis',self.settings['xlim'][1]).colors
+
+        self.ax_prev = plt.axes(self.settings['next_button_loc'])
+        self.ax_next = plt.axes(self.settings['prev_button_loc'])
+        self.b_next = Button(self.ax_next, 'Next')
+        self.b_prev = Button(self.ax_prev, 'Prev')
+        self.b_next.on_clicked(self.next)
+        self.b_prev.on_clicked(self.prev)
+
+        self.ax1 = self.fig.add_subplot(1, 2, 1)
+        self.ax2 = self.fig.add_subplot(1, 2, 2)
+
+        try:
+            matplotlib.rcParams['keymap.back'].remove('left')
+            matplotlib.rcParams['keymap.forward'].remove('right')
+        except Exception:
+            pass
+        self.fig.canvas.mpl_connect("key_press_event", self.on_key_press)
+
+        self.plot()
+
+        # plt.show()      # I think this might prevent python interpreter from closing
+                        # also prevents interactive interpreter from continuing
+                        # comment out if using -i
+
+
 
 
     def plot(self) :
-        #self.ax used for buttons
-        #plt.subplot(1, 2, 1)
-        #ax1 = plt.gca()
-        if self.ax1 == None :
-            self.ax1 = self.fig.add_subplot(1,3,1)
-            self.ax2 = self.fig.add_subplot(1,3,2)
-            self.settings['next_button_loc'] = [ ]
-            # self.ax_next.set_visible(False)
-            # self.ax_prev.set_visible(False)
 
         self.ax1.cla()
 
+        cur_colors = self.cur_cmap()
 
         self.ax1.set_title("{} : {}".format(self.group_by_col, self.group_names[self.ind]))
-        self.cur_group().plot(self.x_name, self.y_name, kind='scatter',c=self.x_name, colormap='viridis', colorbar=False, ax=self.ax1)#,colormap=cm.get_cmap('viridis'))
+        self.cur_group().plot(self.frame_col, self.dist_col, kind='scatter', ax=self.ax1, c=cur_colors)#,colormap=cm.get_cmap('viridis'))
         # self.cur_group().plot(self.x_name, self.y_name, kind='scatter', ax=self.ax1)
 
         self.ax1.set_xlim(self.settings['xlim'])
@@ -197,18 +258,31 @@ class WellPlotLooper(DfPlotLooper2) :
         self.ax2.set_title("{} : {}".format(self.group_by_col, self.group_names[self.ind]))
         # colormap = mpl.cm.get_cmap('viridis',len(self.cur_group()))
         # colormap.set_array(self.cur_group_col(self.x).get_values)
-        self.cur_group().plot(self.x_name2, self.y_name2, kind='scatter',c=self.x_name, colormap='viridis', colorbar=False, ax=self.ax2)
+        img = imread(self.out_path)
+        plt.imshow(img,zorder=0)
+        self.cur_group().plot(self.x_col, self.y_col, kind='scatter', ax=self.ax2, c=cur_colors,zorder=1)
         # self.cur_group().plot(self.x_name2, self.y_name2, kind='scatter', ax=self.ax2)
 
         self.ax2.set_xlim([0,1024])
         self.ax2.set_ylim([0,1024])
         self.ax2.invert_yaxis()
+        # self.ax2.xaxis.tick_top()
 
         plt.draw()
         self.fig.canvas.mpl_connect("key_press_event", self.on_key_press)
 
+    def cur_cmap(self) :
+        cur_frames = self.cur_group_col(self.frame_col).values
+        cur_colors = []
 
+        for f in cur_frames :
+            cur_colors.append(self.cmap_array[f])
+        return cur_colors
 
-    # def plot(self) :
-
-
+    @staticmethod
+    def helper_find_file(path, pattern):
+        """
+        """
+        for file_name in os.listdir(path):
+            if pattern in file_name:
+                return os.path.join(path, file_name)

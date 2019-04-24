@@ -4,6 +4,7 @@ from datetime import datetime
 import xlsxwriter
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 # from .ap_utils import *
 from brutils import *
@@ -502,10 +503,19 @@ class Condit :
         """ dists """
         well_keys = self.wells.keys()
 
-        self.dists = self.wells[well_keys[0]]
-        for well_key in well_keys[1:] :
-            self.dists.append(self.wells[well_key])
-        self.frame_count = self.dists[hdings.FRAME].max()
+        self.combined_wells = self.wells[well_keys[0]].combined
+        keys = set(self.combined.keys())
+
+
+        for well_key in well_keys[1:]:
+            to_add = self.wells[well_key]
+            if not len(keys ^ set(to_add.keys())) == 0:
+                raise Exception
+            else:
+                for key in keys:
+                    self.combined[key].extend(to_add[key])
+
+        self.combined_df = pd.DataFrame(self.combined)
 
 
         self.t_int = self.exper.make_t_int(self.frame_count-1)

@@ -4,7 +4,7 @@ import brutils as br
 exp = ap.make_cur_exper()
 
 condit = br.one_value(exp.condits)
-well = br.one_value(condit.wells)
+well = exp.wells['B19']
 
 well.plot_looper()
 # def some_condition(cur_group) :
