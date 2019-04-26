@@ -1,17 +1,64 @@
-from brutils import *
-# from .hdings import *
-import pandas as pd
-from termcolor import colored
-import matplotlib as mpl
-# from matplotlib import cm
-from scipy.misc import imread
+
 from os.path import join as pjoin
 
+import pandas as pd
+import matplotlib as mpl
 
+# TODO: change PyCharm settings so unused imports are not the same color as comments
+from termcolor import colored
+from scipy.misc import imread
 
+from brutils import *
 from . import hdings
-from . import hdings as hs
-class Well :
+
+
+class Well(object) :
+
+    # def __new__(cls):
+    #     return super(Well, cls).__new__(cls)
+
+    @staticmethod
+    def make_from_existing(existing_well) :
+        self = super(Well, Well).__new__(Well)
+
+        self.exper = existing_well.exper
+        self.name = existing_well.name
+        self.path = existing_well.path
+        self.cdf = existing_well.cdf
+        self.cells = existing_well.cells
+        self.combined = existing_well.combined
+        self.cdf2 = existing_well.cdf2
+        self.frame_cdict = existing_well.frame_cdict
+
+        return self
+        #self.condit = existing_well.condit
+        
+        
+    
+    def __init__(self, exper, well_name, csv_path) :
+        self.exper = exper
+        self.name = well_name
+        print(self.name)
+        self.path = csv_path
+
+        self.read_in()
+        self.create_dists()
+        self.remake_df_vanilla()
+        self.cdf[hdings.WELL] = self.name
+
+        self.frame_index()
+
+
+
+    def frame_index(self) :
+        self.frame_cdict = {}
+        for cell_id, cell in self.cells.items() :
+            frames = cell[hdings.FRAME]
+            dists = cell[hdings.DIST]
+            self.frame_cdict[cell_id] = dict(zip(frames,dists))
+
+
+
     def __init__slow(self, exper, well_name, csv_path) :
         self.exper = exper
         self.name = well_name
@@ -29,40 +76,20 @@ class Well :
         self.cdf[hdings.WELL] = self.name
         self.cdf[hdings.DIST] = np.nan
 
-
-        # print(self.name)
-        # print(self.cdf.columns)
-        #CELL_IDFYIER = 'Track ID'
         self.cell_count = len(set(self.cdf[hdings.T_ID]))
         self.create_dists_slow()
 
 
-    def __init__(self, exper, well_name, csv_path) :
-        self.exper = exper
-        self.name = well_name
-        print(self.name)
-        self.path = csv_path
+    
 
-        self.read_in_compare()
-        self.create_dists_compare()
-        self.remake_df1()
-        # print(self.cdf2)
+    
 
-    def __str__(self) :
-        """
-        """
-        return("{}: well {}".format(self.condit.name_str,self.name))
+    
 
-    ## bad practice?
-    def __repr__(self) :
-        """
-        """
-        return("apple_pie.Well: {}".format(self.name))
 
-    def set_condit(self, condit) :
-        self.condit = condit
 
     def create_dists_slow(self) :
+        """  """
         at = dtic('call from well.create_dists')
         self.cdf = self.cdf.groupby(hdings.T_ID).apply(create_df_dists2,hdings.X,hdings.Y,hdings.DIST,hdings.FRAME)
         dtoc(at)
@@ -71,17 +98,15 @@ class Well :
         dtoc(bt)
         return
 
-    def read_in_compare(self) :
+    def read_in(self) :
         self.cdf = pd.read_csv(self.path)
         self.cells = {}
-        for g,group in self.cdf.groupby(hdings.T_ID) :
+        for g, group in self.cdf.groupby(hdings.T_ID) :
             temp = group.to_dict(orient='list')
-            # print(temp[hdings.T_ID])
             self.cells[temp[hdings.T_ID][0]] = temp
 
-    def remake_df1(self) :
+    def remake_df_vanilla(self) :
         cell_keys = list(self.cells.keys())
-        #self.cdf2 = pd.DataFrame(self.cells[cell_keys[0]])
         self.combined = self.cells[cell_keys[0]]
         keys = set(self.combined.keys())
 
@@ -95,35 +120,34 @@ class Well :
 
         self.cdf2 = pd.DataFrame(self.combined)
 
-        #self.cdf2.append(pd.DataFrame(self.cells[cell_key]))
 
-    def remake_df2(self) :
+    def remake_df_pandas(self) :
         cell_keys = list(self.cells.keys())
         self.cdf2 = pd.DataFrame(self.cells[cell_keys[0]])
         for cell_key in cell_keys[1:] :
-            #self.cdf2.concat(self.cells[cell_key])
             self.cdf2 = pd.concat([self.cdf2,pd.DataFrame(self.cells[cell_key])], ignore_index=True)
-            # print(type(self.cells[cell_key]))
-            # self.cdf2.append(self.cells[cell_key])
-            # self.cdf2.merge(pd.DataFrame(self.cells[cell_key]))
 
-    def create_dists_compare(self) :
+
+    def create_dists(self) :
         for cell in self.cells.values() :
-            cell[hs.DIST] = [np.nan]*len(cell[hs.T_ID])
-            # print('len(cell) : {}, len(cell[hs.x]) : {}'.format(len(cell),len(cell[hs.X])))
-            for r in range(len(cell[hs.T_ID])-1) :
-                if cell[hs.FRAME][r] + 1 == cell[hs.FRAME][r+1] :
-                    # print(len(cell))
-                    xs = cell[hs.X][r:r+2]
-                    ys = cell[hs.Y][r:r+2]
-                    # print(xs)
-                    # print(ys)
-                    # print(cell[hs.DIST])
-                    # print(r)
-                    cell[hs.DIST][r] = distance([xs[0],ys[0]],[xs[1],ys[1]])
+            cell[hdings.DIST] = [np.nan] * len(cell[hdings.T_ID])
+            for r in range(len(cell[hdings.T_ID]) - 1) :
+                if cell[hdings.FRAME][r] + 1 == cell[hdings.FRAME][r + 1] :
+                    xs = cell[hdings.X][r:r + 2]
+                    ys = cell[hdings.Y][r:r + 2]
+                    cell[hdings.DIST][r] = distance([xs[0], ys[0]], [xs[1], ys[1]])
 
+    
+    def set_condit(self, condit) :
+        self.condit = condit
 
+    def __str__(self) :
+        return "{}: well {}".format(self.condit.name_str,self.name)
 
+    # def __repr__(self) :
+    #     return "apple_pie.Well: {}".format(self.name)
+    
+    
     @staticmethod
     def lever_csv_to_dict_old(csv_path):
         """
@@ -149,38 +173,26 @@ class Well :
         else:
             return True
 
-
     def plot_looper(self) :
         WellPlotLooper(self.cdf2,  hdings.T_ID, hdings.FRAME, hdings.DIST, hdings.X, hdings.Y, self.exper.path, self.name, title=str(self), some_condition=Well.some_condition)
-
+        
+    
 
 class WellPlotLooper(DfPlotLooper2) :
     MAX_PROJECT_DIR = 'Czi/max_projection_gifs'
-    def __init__old(self, x_name2, y_name2, *args, **kwargs) :
-        self.x_name2 = x_name2
-        # print(self.x_name2)
-        self.y_name2 = y_name2
-        self.ax1 = None
-        self.ax2 = None
-        # self.ax1 = plt.subplot(1,2,1)
-        # self.ax2 = plt.subplot(1,2,2)
-        super(WellPlotLooper, self).__init__(*args, **kwargs)
-        # self.ax1 =
-        # self.ax2 = self.fig.add_subplot(1,2,2)
+    # todo figure out where to put this
+
 
     def __init__(self, well_df, group_by_col, frame_col, dist_col, x_col, y_col, exper_path, well_name, title=None, override_defaults=None, some_condition=None) :
         """
-            | :param: override_defaults : `dict` with keys of settings to override and the desired values
+            | :param override_defaults: `dict` with keys of settings to override and the desired values
             | :param: some_condition : a function which takes the `cur_group()` and returns False if it should not be plotted and `incr`/`decr` should be called again,
             | when equal None, doesn't do the test and plots every group
         """
-        #
-        # self.exper_path = exper_path
-        # self.well_name = well_name
+
 
         out_folder = pjoin(exper_path, WellPlotLooper.MAX_PROJECT_DIR)
         self.out_path = self.helper_find_file(out_folder, well_name)
-        # return out_path
 
         self.settings = DfPlotLooper2.DEFAULTS
         if override_defaults != None:
@@ -201,20 +213,18 @@ class WellPlotLooper(DfPlotLooper2) :
         self.title = title
         self.some_condition = some_condition
 
-        # self.fig = plt.figure(figsize=self.settings['figsize'],tight_layout=True)
-        self.fig = plt.figure(figsize=self.settings['figsize'])  # ,tight_layout=True)
+        self.fig = plt.figure(figsize=self.settings['figsize'])
         if self.title != None:
             self.fig.suptitle(self.title)
         self.fig.show()
-
 
 
         self.cmap_array = mpl.cm.get_cmap('viridis',self.settings['xlim'][1]).colors
 
         self.ax_prev = plt.axes(self.settings['next_button_loc'])
         self.ax_next = plt.axes(self.settings['prev_button_loc'])
-        self.b_next = Button(self.ax_next, 'Next')
-        self.b_prev = Button(self.ax_prev, 'Prev')
+        self.b_next = Button(self.ax_next, 'Next',zorder=3)
+        self.b_prev = Button(self.ax_prev, 'Prev',zorder=3)
         self.b_next.on_clicked(self.next)
         self.b_prev.on_clicked(self.prev)
 
@@ -229,44 +239,43 @@ class WellPlotLooper(DfPlotLooper2) :
         self.fig.canvas.mpl_connect("key_press_event", self.on_key_press)
 
         self.plot()
-
-        # plt.show()      # I think this might prevent python interpreter from closing
-                        # also prevents interactive interpreter from continuing
-                        # comment out if using -i
+        # plt.show()
+            # I think this might prevent python interpreter from closing
+            # also prevents interactive interpreter from continuing
+            # comment out if using -i
+            # TODO: find out programmatically whether in interactive mode and use show if not
 
 
 
 
     def plot(self) :
+        cur_colors = self.cur_cmap()
+
 
         self.ax1.cla()
 
-        cur_colors = self.cur_cmap()
-
         self.ax1.set_title("{} : {}".format(self.group_by_col, self.group_names[self.ind]))
-        self.cur_group().plot(self.frame_col, self.dist_col, kind='scatter', ax=self.ax1, c=cur_colors)#,colormap=cm.get_cmap('viridis'))
-        # self.cur_group().plot(self.x_name, self.y_name, kind='scatter', ax=self.ax1)
+        # todo set_title call could be put in df.plot call instead
+
+        self.cur_group().plot(self.frame_col, self.dist_col, kind='scatter', ax=self.ax1, c=cur_colors)
 
         self.ax1.set_xlim(self.settings['xlim'])
         self.ax1.set_ylim(self.settings['ylim'])
 
 
-        # plt.subplot(1,2,2)
-        # ax2 = plt.gca()
         self.ax2.cla()
 
         self.ax2.set_title("{} : {}".format(self.group_by_col, self.group_names[self.ind]))
-        # colormap = mpl.cm.get_cmap('viridis',len(self.cur_group()))
-        # colormap.set_array(self.cur_group_col(self.x).get_values)
+        # todo set_title call could be put in df.plot call instead
+
         img = imread(self.out_path)
         plt.imshow(img,zorder=0)
         self.cur_group().plot(self.x_col, self.y_col, kind='scatter', ax=self.ax2, c=cur_colors,zorder=1)
-        # self.cur_group().plot(self.x_name2, self.y_name2, kind='scatter', ax=self.ax2)
 
         self.ax2.set_xlim([0,1024])
         self.ax2.set_ylim([0,1024])
         self.ax2.invert_yaxis()
-        # self.ax2.xaxis.tick_top()
+
 
         plt.draw()
         self.fig.canvas.mpl_connect("key_press_event", self.on_key_press)
@@ -279,6 +288,7 @@ class WellPlotLooper(DfPlotLooper2) :
             cur_colors.append(self.cmap_array[f])
         return cur_colors
 
+    # TODO: put helper_find_file in brutils
     @staticmethod
     def helper_find_file(path, pattern):
         """

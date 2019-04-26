@@ -13,7 +13,7 @@ from brutils import *
 
 # from pathlib import Path
 
-class Exper :
+class Exper(object) :
     """
         * self.path
         * self.name
@@ -53,6 +53,54 @@ class Exper :
 
     CONTROL_PAT = 'dmso'    ## all lowercase
 
+    #def __new__(cls) :
+        # return super(Exper, cls).__new__(cls)
+
+    @staticmethod
+    def make_from_existing(existing_exper) :
+        self = super(Exper, Exper).__new__(Exper)
+        
+        
+        self.issue_log = existing_exper.issue_log
+        self.path = existing_exper.path
+        self.name = existing_exper.name
+        self.pm_file_path = existing_exper.pm_file_path
+        self.condit_dict = existing_exper.condit_dict
+        self.csv_path = existing_exper.csv_path
+        self.condit_dist_path = existing_exper.condit_dist_path
+        self.condit_dist_plot_path = existing_exper.condit_dist_plot_path
+        self.control = existing_exper.control
+        self.cstr_tup_dict = existing_exper.cstr_tup_dict
+        self.condit_keys = existing_exper.condit_keys
+        self.groups = existing_exper.groups
+
+        # self.wells = existing_exper.wells
+        # self.condits = existing_exper.condits
+        
+        self.wells = {}
+        for well_name, well in existing_exper.wells.items() :
+            self.wells[well_name] = Well.make_from_existing(well)
+            
+        # self.condits = {}
+        # for condit_name, condit in existing_exper.condits.items :
+        #     self.condits[condit_name] = condit
+
+        self.init_condits()
+
+            # self.dists_to_xlsx2()
+
+        # dtoc(all_t)
+
+            # self.out_plot_a()
+
+        self.init_groups()
+            # self.out_meds_to_xlsx()
+
+            # print(self.groups)
+        # finally:
+        # self.out_issue_log()
+
+        return self
 
     def __init__(self, exper_path) :
         try :
@@ -138,6 +186,8 @@ class Exper :
             # self.drug_groups.append(Group(self, drug_name))
             self.drug_groups[drug_name] = Group(self, drug_name)
     # def make_no
+
+
 
 
 
@@ -277,6 +327,17 @@ class Exper :
             self.condits[condit_name] = Condit(self,condit_name,self.condit_dict[condit_name])
         self.init_control()
         self.init_cstr_tup_dict()
+
+
+        self.condit_keys = list(self.condits.keys())
+
+    ## to make "loop-plottable"
+    def get_max(self) :
+        return len(self.condits)
+
+    def iget(self,i) :
+        return self.condits[self.condit_keys[i]]
+
 
     def init_cstr_tup_dict(self) :
         self.cstr_tup_dict = {}

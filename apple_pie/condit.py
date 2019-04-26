@@ -16,7 +16,7 @@ class RecordedIssue(Exception) :
     pass
 
 
-class Condit :
+class Condit(object) :
 
     """
     """
@@ -25,8 +25,40 @@ class Condit :
     DEAD_FRAME_COUNT = 10
     UPPER_CUTOFF = 50
 
+    RELOAD_TEST = 'hmm'
 
+    # def __new__(cls):
+    #     return super(Condit, cls).__new__(cls)
 
+    @staticmethod
+    def make_from_existing(existing_condit):
+        self = super(Condit, Condit).__new__(Condit)
+
+        self.exper = existing_condit.exper
+        self.name = existing_condit.name
+        self.name_str = existing_condit.name_str
+        self.data = existing_condit.data
+        self.wells = existing_condit.wells
+        self.combined = existing_condit.combined
+        self.combined_df = existing_condit.combined_df
+        self.frame_cdict = existing_condit.frame_cdict
+        self.frame_df = existing_condit.frame_df
+
+        return self
+        # self._smooth_dists = existing_condit._smooth_dists
+        # self._cleaned_dists = existing_condit._cleaned_dists
+        # self._dist_meds = existing_condit._dist_meds
+        # self._dist_means = existing_condit._dist_means
+        # self._cleaned_dist_meds = existing_condit._cleaned_dist_meds
+        # self._cleaned_dist_means = existing_condit._cleaned_dist_means
+        # self._coords = existing_condit._coords
+        # self._coord_cols = existing_condit._coord_cols
+        # self._dead_col = existing_condit._dead_col
+        # self._live_col = existing_condit._live_col
+        # self._none_col = existing_condit._none_col
+        # self._dist_mean_mean = existing_condit._dist_mean_mean
+        # self._norm_dist_means = existing_condit._norm_dist_means
+        # self._norm_mean_mean = existing_condit._norm_mean_mean
 
     def __init__(self, exper, name, well_names) :
         """
@@ -47,6 +79,8 @@ class Condit :
                     self.wells[well_name].set_condit(self)
                 except :
                     self.record_issue('cell.__init__(...)',['missing well'],well=[well_name])
+            self.init_dists()
+            self.butts()
 
             # self.init_dists()
 
@@ -499,16 +533,18 @@ class Condit :
         """
         # }
 
-        self.dists = {}
+        self.combined = {}
         """ dists """
-        well_keys = self.wells.keys()
+        well_keys = list(self.wells.keys())
 
-        self.combined_wells = self.wells[well_keys[0]].combined
+        self.combined = self.wells[well_keys[0]].combined
         keys = set(self.combined.keys())
 
 
         for well_key in well_keys[1:]:
-            to_add = self.wells[well_key]
+            to_add = self.wells[well_key].combined
+            # print(keys)
+            # print(to_add.keys())
             if not len(keys ^ set(to_add.keys())) == 0:
                 raise Exception
             else:
@@ -516,9 +552,60 @@ class Condit :
                     self.combined[key].extend(to_add[key])
 
         self.combined_df = pd.DataFrame(self.combined)
+        #self.t_int = self.exper.make_t_int(self.frame_count-1)
 
 
-        self.t_int = self.exper.make_t_int(self.frame_count-1)
+    def butts(self) :
+        self.frame_cdict = {}
+        for well in self.wells.values() :
+            self.frame_cdict.update(well.frame_cdict)
+
+        self.frame_df = pd.DataFrame.from_dict(self.frame_cdict)
+        # print(type_data)
+
+    def plot(self, ax, fig) :
+        # fig.clf()
+
+        ax.set_title("{} : {}".format('condition', self.name_str))
+
+        # print(ax.fig)
+
+        one = fig.add_subplot(1,2,1)
+        two = fig.add_subplot(1,2,2)
+        # self.frame_df.mean().plot(kind='scatter', ax=ax)
+        #self.frame_df.mean(1).plot(marker='o', linestyle='', ax=ax)
+
+
+        # self.frame_df.mean(1).hist(ax=ax)
+        # print(self.frame_df.squeeze())
+        temp = self.frame_df.values.flatten()
+        one.hist(temp)#,ax=ax)
+
+
+        temp[temp < 30] = np.nan
+        print(temp)
+        two.hist(self.frame_df.values.flatten())#,ax=ax)
+        two.set_xlim(0,30)
+        # ax.set_xlim([0,120])
+        # ax.set_ylim([-1,50])
+        # print(self.frame_df.mean(1))
+
+
+
+
+
+
+
+    # def plot_looper(self) :
+    #     """ assumes 'init_dists' has been called """
+    #
+    #     grouped_df = self.combined_df.groupby(hdings.T_ID,hdings.WELL)
+    #     # DfPlotLooper2(grouped_df, )
+    #
+    #
+    # def idek(self) :
+
+
 
     def init_fix_dists_zeros(self) :
         pattern = [None, 0.0]
