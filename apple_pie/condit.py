@@ -563,14 +563,15 @@ class Condit(object) :
         self.frame_df = pd.DataFrame.from_dict(self.frame_cdict)
         # print(type_data)
 
-    def plot(self, ax, fig) :
+    def plot(self, fig) :
         # fig.clf()
 
-        ax.set_title("{} : {}".format('condition', self.name_str))
 
         # print(ax.fig)
 
         one = fig.add_subplot(1,2,1)
+        one.set_title("{} : {}".format('condition', self.name_str))
+
         two = fig.add_subplot(1,2,2)
         # self.frame_df.mean().plot(kind='scatter', ax=ax)
         #self.frame_df.mean(1).plot(marker='o', linestyle='', ax=ax)
@@ -582,10 +583,12 @@ class Condit(object) :
         one.hist(temp)#,ax=ax)
 
 
-        temp[temp < 30] = np.nan
-        print(temp)
-        two.hist(self.frame_df.values.flatten())#,ax=ax)
-        two.set_xlim(0,30)
+        # del temp[temp < 30]# = np.nan
+        temp2 = temp[temp < 30]
+        # print(temp)
+        #two.hist(self.frame_df.values.flatten())#,ax=ax)
+        two.hist(temp2)#,ax=ax)
+        # two.set_xlim(0,30)
         # ax.set_xlim([0,120])
         # ax.set_ylim([-1,50])
         # print(self.frame_df.mean(1))
