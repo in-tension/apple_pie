@@ -80,7 +80,7 @@ class Condit(object) :
                 except :
                     self.record_issue('cell.__init__(...)',['missing well'],well=[well_name])
             self.init_dists()
-            self.butts()
+            self.make_frame_df()
 
             # self.init_dists()
 
@@ -555,7 +555,7 @@ class Condit(object) :
         #self.t_int = self.exper.make_t_int(self.frame_count-1)
 
 
-    def butts(self) :
+    def make_frame_df(self) :
         self.frame_cdict = {}
         for well in self.wells.values() :
             self.frame_cdict.update(well.frame_cdict)
@@ -563,16 +563,16 @@ class Condit(object) :
         self.frame_df = pd.DataFrame.from_dict(self.frame_cdict)
         # print(type_data)
 
-    def plot(self, fig) :
+    def plot(self, axes) :
         # fig.clf()
 
 
         # print(ax.fig)
 
-        one = fig.add_subplot(1,2,1)
-        one.set_title("{} : {}".format('condition', self.name_str))
+        #one = fig.add_subplot(1,2,1)
+        axes[0].set_title("{} : {}".format('condition', self.name_str))
 
-        two = fig.add_subplot(1,2,2)
+        #two = fig.add_subplot(1,2,2)
         # self.frame_df.mean().plot(kind='scatter', ax=ax)
         #self.frame_df.mean(1).plot(marker='o', linestyle='', ax=ax)
 
@@ -580,14 +580,14 @@ class Condit(object) :
         # self.frame_df.mean(1).hist(ax=ax)
         # print(self.frame_df.squeeze())
         temp = self.frame_df.values.flatten()
-        one.hist(temp)#,ax=ax)
+        axes[0].hist(temp)#,ax=ax)
 
 
         # del temp[temp < 30]# = np.nan
         temp2 = temp[temp < 30]
         # print(temp)
         #two.hist(self.frame_df.values.flatten())#,ax=ax)
-        two.hist(temp2)#,ax=ax)
+        axes[1].hist(temp2)#,ax=ax)
         # two.set_xlim(0,30)
         # ax.set_xlim([0,120])
         # ax.set_ylim([-1,50])
