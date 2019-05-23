@@ -3,6 +3,10 @@ import apple_pie as ap
 import brutils as br
 import importlib as imp
 
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
 def reload(package) :
     d=br.dtic('reload')
     import os
